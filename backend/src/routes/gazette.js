@@ -5,6 +5,15 @@ import fs from 'fs'
 import pdf from 'pdf-parse'
 import GazetteDocument from '../models/GazetteDocument.js'
 import { authenticate, authorize } from '../middleware/auth.js'
+import { 
+  gazetteUploadValidation, 
+  gazetteSearchValidation, 
+  mongoIdValidation 
+} from '../middleware/validators.js'
+import { catchAsync, AppError } from '../middleware/errorHandler.js'
+import { uploadLimiter } from '../middleware/rateLimiter.js'
+import { paginate, paginatedResponse } from '../utils/pagination.js'
+import logger from '../config/logger.js'
 
 const router = express.Router()
 
@@ -38,17 +47,31 @@ const upload = multer({
 })
 
 // Upload and process PDF
-router.post('/upload', authenticate, upload.single('pdf'), async (req, res) => {
-  try {
+router.post('/upload', 
+  authenticate, 
+  uploadLimiter,
+  upload.single('pdf'), 
+  gazetteUploadValidation,
+  catchAsync(async (req, res) => {
     const { title, documentNumber, publicationDate, category, tags } = req.body
 
     if (!req.file) {
-      return res.status(400).json({ message: 'PDF file required' })
+      throw new AppError('PDF file required', 400)
     }
+
+    logger.info('Processing PDF upload', { 
+      filename: req.file.originalname, 
+      size: req.file.size 
+    })
 
     // Extract text from PDF
     const dataBuffer = fs.readFileSync(req.file.path)
     const pdfData = await pdf(dataBuffer)
+
+    logger.info('PDF text extracted', { 
+      pageCount: pdfData.numpages, 
+      textLength: pdfData.text.length 
+    })
 
     // Create document record
     const gazetteDoc = new GazetteDocument({
@@ -68,87 +91,95 @@ router.post('/upload', authenticate, upload.single('pdf'), async (req, res) => {
 
     await gazetteDoc.save()
 
+    logger.info('Gazette document uploaded successfully', { 
+      id: gazetteDoc._id, 
+      documentNumber 
+    })
+
     res.status(201).json({
+      status: 'success',
       message: 'Gazette document uploaded successfully',
-      document: {
+      data: {
         id: gazetteDoc._id,
         title: gazetteDoc.title,
         documentNumber: gazetteDoc.documentNumber,
-        pageCount: gazetteDoc.pageCount
+        pageCount: gazetteDoc.pageCount,
+        fileSize: gazetteDoc.fileSize
       }
     })
-  } catch (error) {
-    console.error('Upload error:', error)
-    res.status(500).json({ message: 'Failed to upload document', error: error.message })
-  }
-})
+  })
+)
 
 // Search gazette documents
-router.get('/search', async (req, res) => {
-  try {
-    const { q, category, year, page = 1, limit = 10 } = req.query
+router.get('/search', gazetteSearchValidation, catchAsync(async (req, res) => {
+  const { q, category, year, page = 1, limit = 10 } = req.query
 
-    let query = {}
+  let query = {}
 
-    // Text search
-    if (q) {
-      query.$text = { $search: q }
-    }
-
-    // Filter by category
-    if (category) {
-      query.category = category
-    }
-
-    // Filter by year
-    if (year) {
-      const startDate = new Date(`${year}-01-01`)
-      const endDate = new Date(`${year}-12-31`)
-      query.publicationDate = { $gte: startDate, $lte: endDate }
-    }
-
-    const documents = await GazetteDocument.find(query)
-      .select('-extractedText') // Don't return full text in list
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ publicationDate: -1 })
-
-    const count = await GazetteDocument.countDocuments(query)
-
-    res.json({
-      documents: documents.map(doc => ({
-        id: doc._id,
-        title: doc.title,
-        documentNumber: doc.documentNumber,
-        publicationDate: doc.publicationDate,
-        category: doc.category,
-        pageCount: doc.pageCount,
-        tags: doc.tags
-      })),
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      totalDocuments: count
-    })
-  } catch (error) {
-    console.error('Search error:', error)
-    res.status(500).json({ message: 'Search failed' })
+  // Text search
+  if (q) {
+    query.$text = { $search: q }
   }
-})
+
+  // Filter by category
+  if (category) {
+    query.category = category
+  }
+
+  // Filter by year
+  if (year) {
+    const startDate = new Date(`${year}-01-01`)
+    const endDate = new Date(`${year}-12-31`)
+    query.publicationDate = { $gte: startDate, $lte: endDate }
+  }
+
+  logger.info('Gazette search request', { query: q, category, year, page })
+
+  const { results, pagination } = await paginate(
+    GazetteDocument,
+    query,
+    {
+      page,
+      limit,
+      sort: q ? { score: { $meta: 'textScore' } } : { publicationDate: -1 },
+      select: '-extractedText'
+    }
+  )
+
+  const formattedResults = results.map(doc => ({
+    id: doc._id,
+    title: doc.title,
+    documentNumber: doc.documentNumber,
+    publicationDate: doc.publicationDate,
+    category: doc.category,
+    pageCount: doc.pageCount,
+    tags: doc.tags
+  }))
+
+  res.json(paginatedResponse(
+    formattedResults,
+    pagination,
+    `Found ${results.length} gazette documents`
+  ))
+}))
 
 // Get single document with full text
-router.get('/:id', async (req, res) => {
-  try {
-    const document = await GazetteDocument.findById(req.params.id)
+router.get('/:id', mongoIdValidation, catchAsync(async (req, res) => {
+  const document = await GazetteDocument.findById(req.params.id)
 
-    if (!document) {
-      return res.status(404).json({ message: 'Document not found' })
-    }
+  if (!document) {
+    throw new AppError('Document not found', 404)
+  }
 
-    // Increment search count
-    document.searchCount += 1
-    await document.save()
+  // Increment search count
+  document.searchCount += 1
+  await document.save()
 
-    res.json({
+  logger.info('Gazette document accessed', { id: document._id, documentNumber: document.documentNumber })
+
+  res.json({
+    status: 'success',
+    data: {
       id: document._id,
       title: document.title,
       documentNumber: document.documentNumber,
@@ -158,74 +189,76 @@ router.get('/:id', async (req, res) => {
       summary: document.summary,
       pageCount: document.pageCount,
       tags: document.tags,
-      pdfUrl: document.pdfUrl
-    })
-  } catch (error) {
-    console.error('Get document error:', error)
-    res.status(500).json({ message: 'Failed to fetch document' })
-  }
-})
+      pdfUrl: document.pdfUrl,
+      downloadCount: document.downloadCount,
+      searchCount: document.searchCount
+    }
+  })
+}))
 
 // Download PDF
-router.get('/:id/download', async (req, res) => {
-  try {
-    const document = await GazetteDocument.findById(req.params.id)
+router.get('/:id/download', mongoIdValidation, catchAsync(async (req, res) => {
+  const document = await GazetteDocument.findById(req.params.id)
 
-    if (!document) {
-      return res.status(404).json({ message: 'Document not found' })
-    }
-
-    const filePath = path.join(process.cwd(), 'uploads', 'gazettes', document.pdfFileName)
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'PDF file not found' })
-    }
-
-    // Increment download count
-    document.downloadCount += 1
-    await document.save()
-
-    res.download(filePath, `${document.documentNumber}.pdf`)
-  } catch (error) {
-    console.error('Download error:', error)
-    res.status(500).json({ message: 'Failed to download document' })
+  if (!document) {
+    throw new AppError('Document not found', 404)
   }
-})
+
+  const filePath = path.join(process.cwd(), 'uploads', 'gazettes', document.pdfFileName)
+
+  if (!fs.existsSync(filePath)) {
+    logger.error('PDF file not found on disk', { 
+      documentId: document._id, 
+      expectedPath: filePath 
+    })
+    throw new AppError('PDF file not found', 404)
+  }
+
+  // Increment download count
+  document.downloadCount += 1
+  await document.save()
+
+  logger.info('Gazette PDF downloaded', { 
+    id: document._id, 
+    documentNumber: document.documentNumber 
+  })
+
+  res.download(filePath, `${document.documentNumber.replace(/[\/\\]/g, '-')}.pdf`)
+}))
 
 // Get all documents (admin/browse)
-router.get('/', async (req, res) => {
-  try {
-    const { page = 1, limit = 20, category } = req.query
+router.get('/', catchAsync(async (req, res) => {
+  const { page = 1, limit = 20, category } = req.query
 
-    const query = category ? { category } : {}
+  const query = category ? { category } : {}
 
-    const documents = await GazetteDocument.find(query)
-      .select('-extractedText')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ publicationDate: -1 })
+  const { results, pagination } = await paginate(
+    GazetteDocument,
+    query,
+    {
+      page,
+      limit,
+      sort: '-publicationDate',
+      select: '-extractedText'
+    }
+  )
 
-    const count = await GazetteDocument.countDocuments(query)
+  const formattedResults = results.map(doc => ({
+    id: doc._id,
+    title: doc.title,
+    documentNumber: doc.documentNumber,
+    publicationDate: doc.publicationDate,
+    category: doc.category,
+    pageCount: doc.pageCount,
+    fileSize: doc.fileSize,
+    tags: doc.tags
+  }))
 
-    res.json({
-      documents: documents.map(doc => ({
-        id: doc._id,
-        title: doc.title,
-        documentNumber: doc.documentNumber,
-        publicationDate: doc.publicationDate,
-        category: doc.category,
-        pageCount: doc.pageCount,
-        fileSize: doc.fileSize,
-        tags: doc.tags
-      })),
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      totalDocuments: count
-    })
-  } catch (error) {
-    console.error('Get documents error:', error)
-    res.status(500).json({ message: 'Failed to fetch documents' })
-  }
-})
+  res.json(paginatedResponse(
+    formattedResults,
+    pagination,
+    'Gazette documents retrieved successfully'
+  ))
+}))
 
 export default router
