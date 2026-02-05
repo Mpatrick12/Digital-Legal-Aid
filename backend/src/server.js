@@ -9,6 +9,7 @@ import legalContentRoutes from './routes/legalContent.js'
 import searchRoutes from './routes/search.js'
 import gazetteRoutes from './routes/gazette.js'
 import debugRoutes from './routes/debug.js'
+import analyticsRoutes from './routes/analytics.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { requestLogger, logger } from './config/logger.js'
 import { apiLimiter } from './middleware/rateLimiter.js'
@@ -43,6 +44,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/legal-content', legalContentRoutes)
 app.use('/api/search', searchRoutes)
 app.use('/api/gazette', gazetteRoutes)
+app.use('/api/analytics', analyticsRoutes)
 app.use('/api/debug', debugRoutes)
 
 // Health check
