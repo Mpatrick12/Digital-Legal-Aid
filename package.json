@@ -1,0 +1,23 @@
+{
+  "name": "digital-legal-aid",
+  "version": "1.0.0",
+  "description": "Centralized Platform for Simplified Access to Justice Information in Rwanda",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend",
+    "install:all": "npm install && npm install --workspace=frontend && npm install --workspace=backend"
+  },
+  "keywords": ["legal-aid", "rwanda", "justice", "pwa"],
+  "author": "Patrick Mukunzi",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
