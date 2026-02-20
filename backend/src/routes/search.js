@@ -11,17 +11,20 @@ const router = express.Router()
 
 // Synonym mapping for better search results
 const synonymMap = {
-  'stolen': ['theft', 'robbed', 'burglary', 'ubujura'],
-  'hit': ['assault', 'attacked', 'beaten', 'gukubita'],
+  'theft': ['stolen', 'stole', 'steal', 'thieves', 'thief', 'robbed', 'robbery', 'burglary', 'ubujura'],
+  'assault': ['hit', 'attacked', 'beaten', 'battery', 'violence', 'fight', 'gukubita'],
   'violence': ['GBV', 'domestic abuse', 'assault', 'ihohoterwa'],
-  'rape': ['sexual assault', 'GBV', 'gufata ku ngufu'],
-  'fraud': ['scam', 'deception', 'uburiganya'],
-  'killed': ['murder', 'homicide', 'ubwicanyi']
+  'rape': ['sexual assault', 'sexual violence', 'GBV', 'gufata ku ngufu'],
+  'fraud': ['scam', 'deception', 'cheat', 'deceive', 'uburiganya'],
+  'murder': ['killed', 'homicide', 'killing', 'ubwicanyi'],
+  'drug': ['drugs', 'narcotics', 'substance', 'ibiyobyabwenge'],
+  'corruption': ['bribery', 'bribe', 'ruswa'],
+  'property': ['land', 'house', 'building', 'estate', 'umutungo']
 }
 
 // Expand query with synonyms
 const expandQueryWithSynonyms = (query) => {
-  const terms = query.toLowerCase().split(' ')
+  const terms = query.toLowerCase().split(/\s+/)
   const expandedTerms = new Set(terms)
   
   terms.forEach(term => {
@@ -44,6 +47,7 @@ router.get('/', searchLimiter, searchValidation, catchAsync(async (req, res) => 
 
   // Expand search query with synonyms
   const expandedQuery = expandQueryWithSynonyms(q)
+  logger.info('Expanded search query', { original: q, expanded: expandedQuery })
   
   // Build MongoDB text search query
   const searchQuery = {

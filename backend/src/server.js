@@ -16,6 +16,16 @@ import { apiLimiter } from './middleware/rateLimiter.js'
 
 dotenv.config()
 
+// Validate required environment variables
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET']
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName])
+
+if (missingEnvVars.length > 0) {
+  console.error('❌ Missing required environment variables:', missingEnvVars.join(', '))
+  console.error('Please create a .env file with all required variables')
+  process.exit(1)
+}
+
 const app = express()
 
 // Security middleware
@@ -69,7 +79,7 @@ app.use((req, res) => {
 app.use(errorHandler)
 
 // Database connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/digital-legal-aid'
+const MONGODB_URI = process.env.MONGODB_URI
 
 mongoose.connect(MONGODB_URI)
   .then(() => {

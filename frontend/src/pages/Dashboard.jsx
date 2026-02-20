@@ -9,7 +9,8 @@ function Dashboard() {
     name: 'Patrik Karekezi',
     email: 'patrik@gmail.com',
     phone: '+250785456534',
-    district: 'Kicukiro'
+    district: 'Kicukiro',
+    role: 'citizen'
   })
   const [activeTab, setActiveTab] = useState('legal-aid')
   const [language, setLanguage] = useState('English')
@@ -18,6 +19,19 @@ function Dashboard() {
     const token = localStorage.getItem('token')
     if (!token) {
       navigate('/signin')
+      return
+    }
+    
+    // Load user data from localStorage
+    const userData = JSON.parse(localStorage.getItem('user') || '{}')
+    if (userData.name) {
+      setUser({
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone || 'N/A',
+        district: userData.district,
+        role: userData.role || 'citizen'
+      })
     }
   }, [navigate])
 
@@ -62,6 +76,11 @@ function Dashboard() {
               <span>{language}</span>
               <ChevronDown size={16} />
             </div>
+            {user.role === 'admin' && (
+              <Link to="/admin/dashboard" className="admin-link-btn">
+                Admin Portal
+              </Link>
+            )}
             <div className="user-info">
               <div className="user-details">
                 <div className="user-name">{user.name}</div>
@@ -89,14 +108,6 @@ function Dashboard() {
             <div className="quick-access">
               <div className="quick-access-header">
                 <h2>Quick Access</h2>
-                <Link to="/admin/upload-gazette" className="upload-link">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  Upload Gazette
-                </Link>
               </div>
               <div className="access-grid">
                 <Link to="/search" className="access-card">

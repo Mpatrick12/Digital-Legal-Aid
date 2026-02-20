@@ -168,7 +168,11 @@ const sampleData = [
 
 async function seedDatabase() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/digital-legal-aid')
+    if (!process.env.MONGODB_URI) {
+      console.error('❌ MONGODB_URI environment variable is required')
+      process.exit(1)
+    }
+    await mongoose.connect(process.env.MONGODB_URI)
     console.log('✅ Connected to MongoDB')
 
     // Clear existing data

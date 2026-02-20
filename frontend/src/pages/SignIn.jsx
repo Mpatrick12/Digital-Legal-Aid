@@ -25,7 +25,14 @@ function SignIn() {
     try {
       const response = await axios.post('/api/auth/signin', formData)
       localStorage.setItem('token', response.data.token)
-      navigate('/dashboard')
+      localStorage.setItem('user', JSON.stringify(response.data.user))
+      
+      // Redirect based on user role
+      if (response.data.user.role === 'admin') {
+        navigate('/admin/dashboard')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed')
     } finally {

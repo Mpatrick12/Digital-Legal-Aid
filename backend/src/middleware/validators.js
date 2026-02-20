@@ -59,8 +59,8 @@ export const gazetteUploadValidation = [
     .trim()
     .notEmpty()
     .withMessage('Document number is required')
-    .matches(/^N°\s*\d+\/\d{4}$/)
-    .withMessage('Document number must match format: N° XX/YYYY'),
+    .matches(/^N[°o]?\s*\d+\/\d{4}$/i)
+    .withMessage('Document number must match format: N° XX/YYYY or N XX/YYYY'),
   body('publicationDate')
     .isISO8601()
     .withMessage('Valid date required (ISO 8601 format)'),

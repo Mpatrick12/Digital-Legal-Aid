@@ -53,6 +53,7 @@ function SignUp() {
       })
       
       localStorage.setItem('token', response.data.token)
+      localStorage.setItem('user', JSON.stringify(response.data.user))
       navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed')
@@ -83,7 +84,8 @@ function SignUp() {
                 type="text"
                 id="fullName"
                 name="fullName"
-                placeholder="John Doe"
+                placeholder="Full name
+                "
                 value={formData.fullName}
                 onChange={handleChange}
                 required

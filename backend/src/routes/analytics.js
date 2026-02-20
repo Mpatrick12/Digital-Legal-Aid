@@ -23,7 +23,8 @@ router.get('/stats', authenticate, catchAsync(async (req, res) => {
     popularContent,
     popularGazettes,
     gazetteStats,
-    searchTrends
+    searchTrends,
+    districtBreakdown
   ] = await Promise.all([
     // Total searches
     SearchLog.countDocuments(),
@@ -89,6 +90,12 @@ router.get('/stats', authenticate, catchAsync(async (req, res) => {
         }
       },
       { $sort: { _id: 1 } }
+    ]),
+    
+    // Users by district
+    User.aggregate([
+      { $group: { _id: '$district', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
     ])
   ])
 
@@ -131,6 +138,10 @@ router.get('/stats', authenticate, catchAsync(async (req, res) => {
       searchTrends: searchTrends.map(t => ({
         date: t._id,
         searches: t.count
+      })),
+      districtBreakdown: districtBreakdown.map(d => ({
+        district: d._id,
+        count: d.count
       }))
     }
   })

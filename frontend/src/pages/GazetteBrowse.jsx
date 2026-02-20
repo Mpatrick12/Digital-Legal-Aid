@@ -12,11 +12,14 @@ function GazetteBrowse() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedYear, setSelectedYear] = useState('')
   const [dbStats, setDbStats] = useState({ totalDocuments: 0, recentUploads: [] })
+  const [user, setUser] = useState(null)
 
   const categories = ['Law', 'Presidential Order', 'Ministerial Order', 'Prime Minister Order', 'Other']
   const years = ['2024', '2023', '2022', '2021', '2020', '2019', '2018']
 
   useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('user') || '{}')
+    setUser(userData)
     fetchDocuments()
     fetchDbStats()
   }, [selectedCategory, selectedYear])
@@ -39,7 +42,7 @@ function GazetteBrowse() {
       if (selectedYear) params.append('year', selectedYear)
 
       const response = await axios.get(`/api/gazette?${params.toString()}`)
-      setDocuments(response.data.documents || [])
+      setDocuments(response.data.data || [])
     } catch (error) {
       console.error('Fetch error:', error)
       setDocuments([])
@@ -55,7 +58,7 @@ function GazetteBrowse() {
     setLoading(true)
     try {
       const response = await axios.get(`/api/gazette/search?q=${encodeURIComponent(searchQuery)}`)
-      setDocuments(response.data.documents || [])
+      setDocuments(response.data.data || [])
     } catch (error) {
       console.error('Search error:', error)
     } finally {
@@ -80,9 +83,11 @@ function GazetteBrowse() {
           </Link>
 
           <div className="nav-actions">
-            <Link to="/admin/upload-gazette" className="nav-btn upload-btn-nav">
-              Upload Document
-            </Link>
+            {user?.role === 'admin' && (
+              <Link to="/admin/upload-gazette" className="nav-btn upload-btn-nav">
+                Upload Document
+              </Link>
+            )}
             <Link to="/dashboard" className="nav-btn">Dashboard</Link>
             <button onClick={() => navigate(-1)} className="nav-btn">Back</button>
           </div>
@@ -154,7 +159,7 @@ function GazetteBrowse() {
           ) : documents.length > 0 ? (
             <div className="documents-grid">
               {documents.map((doc) => (
-                <div key={doc._id} className="document-card">
+                <div key={doc.id || doc._id} className="document-card">
                   <div className="doc-header">
                     <div className="doc-icon">
                       <BookOpen size={24} color="#7c3aed" />
@@ -183,10 +188,10 @@ function GazetteBrowse() {
                   )}
 
                   <div className="doc-actions">
-                    <Link to={`/gazette/${doc._id}`} className="btn-view">
+                    <Link to={`/gazette/${doc.id || doc._id}`} className="btn-view">
                       View Details
                     </Link>
-                    <button onClick={() => handleDownload(doc._id)} className="btn-download">
+                    <button onClick={() => handleDownload(doc.id || doc._id)} className="btn-download">
                       <Download size={16} />
                       Download PDF
                     </button>

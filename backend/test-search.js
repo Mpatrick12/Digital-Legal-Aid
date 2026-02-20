@@ -1,9 +1,16 @@
 import mongoose from 'mongoose'
+import dotenv from 'dotenv'
 import GazetteDocument from './src/models/GazetteDocument.js'
+
+dotenv.config()
 
 async function testSearch() {
   try {
-    await mongoose.connect('mongodb://localhost:27017/digital-legal-aid')
+    if (!process.env.MONGODB_URI) {
+      console.error('❌ MONGODB_URI environment variable is required')
+      process.exit(1)
+    }
+    await mongoose.connect(process.env.MONGODB_URI)
     console.log('Connected to MongoDB\n')
 
     // Test 1: Search for "theft"

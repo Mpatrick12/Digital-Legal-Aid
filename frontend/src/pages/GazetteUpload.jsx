@@ -127,7 +127,7 @@ function GazetteUpload() {
                   name="documentNumber"
                   value={formData.documentNumber}
                   onChange={handleChange}
-                  placeholder="e.g., N° 68/2018"
+                  placeholder="e.g., N 68/2018 or N° 68/2018"
                   required
                 />
               </div>

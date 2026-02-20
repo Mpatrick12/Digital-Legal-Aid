@@ -17,6 +17,36 @@ import logger from '../config/logger.js'
 
 const router = express.Router()
 
+// Synonym mapping for better search results
+const synonymMap = {
+  'theft': ['stolen', 'stole', 'steal', 'thieves', 'thief', 'robbed', 'robbery', 'burglary', 'ubujura'],
+  'assault': ['hit', 'attacked', 'beaten', 'battery', 'violence', 'fight', 'gukubita'],
+  'violence': ['GBV', 'domestic abuse', 'assault', 'ihohoterwa'],
+  'rape': ['sexual assault', 'sexual violence', 'GBV', 'gufata ku ngufu'],
+  'fraud': ['scam', 'deception', 'cheat', 'deceive', 'uburiganya'],
+  'murder': ['killed', 'homicide', 'killing', 'ubwicanyi'],
+  'drug': ['drugs', 'narcotics', 'substance', 'ibiyobyabwenge'],
+  'corruption': ['bribery', 'bribe', 'ruswa'],
+  'property': ['land', 'house', 'building', 'estate', 'umutungo']
+}
+
+// Expand query with synonyms
+const expandQueryWithSynonyms = (query) => {
+  const terms = query.toLowerCase().split(/\s+/)
+  const expandedTerms = new Set(terms)
+  
+  terms.forEach(term => {
+    Object.entries(synonymMap).forEach(([key, synonyms]) => {
+      if (key === term || synonyms.includes(term)) {
+        expandedTerms.add(key)
+        synonyms.forEach(syn => expandedTerms.add(syn))
+      }
+    })
+  })
+  
+  return Array.from(expandedTerms).join(' ')
+}
+
 // Configure multer for PDF uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -46,9 +76,10 @@ const upload = multer({
   }
 })
 
-// Upload and process PDF
+// Upload and process PDF (Admin only)
 router.post('/upload', 
   authenticate, 
+  authorize('admin'),
   uploadLimiter,
   upload.single('pdf'), 
   gazetteUploadValidation,
@@ -116,9 +147,11 @@ router.get('/search', gazetteSearchValidation, catchAsync(async (req, res) => {
 
   let query = {}
 
-  // Text search
+  // Text search with synonym expansion
   if (q) {
-    query.$text = { $search: q }
+    const expandedQuery = expandQueryWithSynonyms(q)
+    query.$text = { $search: expandedQuery }
+    logger.info('Expanded search query', { original: q, expanded: expandedQuery })
   }
 
   // Filter by category

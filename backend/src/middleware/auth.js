@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
+import User from '../models/User.js'
 
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '')
     
@@ -10,6 +11,14 @@ export const authenticate = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     req.userId = decoded.userId
+    req.userRole = decoded.role
+    
+    // Optionally fetch full user object
+    const user = await User.findById(decoded.userId).select('-password')
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' })
+    }
+    req.user = user
     next()
   } catch (error) {
     res.status(401).json({ message: 'Invalid token' })
