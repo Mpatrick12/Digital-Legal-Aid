@@ -4,17 +4,27 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import helmet from 'helmet'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// Load .env from backend/ directory — must be before any env reads
+dotenv.config({ path: path.join(__dirname, '../../.env') })
+
 import authRoutes from './routes/auth.js'
 import legalContentRoutes from './routes/legalContent.js'
 import searchRoutes from './routes/search.js'
 import gazetteRoutes from './routes/gazette.js'
 import debugRoutes from './routes/debug.js'
 import analyticsRoutes from './routes/analytics.js'
+import chatRoutes from './routes/chat.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { requestLogger, logger } from './config/logger.js'
 import { apiLimiter } from './middleware/rateLimiter.js'
 
-dotenv.config()
+// Load .env from backend/ — explicit path so it works regardless of CWD
+dotenv.config({ path: path.join(__dirname, '../.env') })
 
 // Validate required environment variables
 const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET']
@@ -55,6 +65,7 @@ app.use('/api/legal-content', legalContentRoutes)
 app.use('/api/search', searchRoutes)
 app.use('/api/gazette', gazetteRoutes)
 app.use('/api/analytics', analyticsRoutes)
+app.use('/api/chat', chatRoutes)
 app.use('/api/debug', debugRoutes)
 
 // Health check

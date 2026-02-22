@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Scale, Shield, BookOpen, Building, Phone, User, Clock, ChevronDown } from 'lucide-react'
+import { useLanguage } from '../context/LanguageContext.jsx'
+import { t } from '../translations.js'
 import './Dashboard.css'
 
 function Dashboard() {
   const navigate = useNavigate()
+  const { language, setLanguage } = useLanguage()
   const [user, setUser] = useState({
     name: 'Patrik Karekezi',
     email: 'patrik@gmail.com',
@@ -13,7 +16,6 @@ function Dashboard() {
     role: 'citizen'
   })
   const [activeTab, setActiveTab] = useState('legal-aid')
-  const [language, setLanguage] = useState('English')
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -72,10 +74,14 @@ function Dashboard() {
           </div>
 
           <div className="nav-right">
-            <div className="language-selector">
-              <span>{language}</span>
+            <button
+              className="language-selector"
+              onClick={() => setLanguage(language === 'en' ? 'rw' : 'en')}
+              title="Switch language"
+            >
+              <span>{language === 'en' ? 'English' : 'Kinyarwanda'}</span>
               <ChevronDown size={16} />
-            </div>
+            </button>
             {user.role === 'admin' && (
               <Link to="/admin/dashboard" className="admin-link-btn">
                 Admin Portal

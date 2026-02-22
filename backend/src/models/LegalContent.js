@@ -4,7 +4,7 @@ const legalContentSchema = new mongoose.Schema({
   crimeType: {
     type: String,
     required: true,
-    enum: ['Theft', 'Assault', 'GBV', 'Fraud', 'Property Damage', 'Other']
+    enum: ['Theft', 'Assault', 'GBV', 'Fraud', 'Property Damage', 'Murder', 'Drug', 'Corruption', 'Other']
   },
   articleNumber: {
     type: String,
@@ -38,6 +38,7 @@ const legalContentSchema = new mongoose.Schema({
     ref: 'LegalContent'
   }],
   tags: [String],
+  keywords: [String],
   viewCount: {
     type: Number,
     default: 0
@@ -49,6 +50,8 @@ const legalContentSchema = new mongoose.Schema({
 // Text index for search
 legalContentSchema.index({ 
   crimeType: 'text', 
+  'originalText.en': 'text',
+  'originalText.rw': 'text',
   'simplifiedExplanation.en': 'text',
   'simplifiedExplanation.rw': 'text',
   tags: 'text'

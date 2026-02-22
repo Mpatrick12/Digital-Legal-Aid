@@ -1,3 +1,171 @@
+/* ── AI Answer Card ──────────────────────────────────────────────────────── */
+
+.ai-answer-card {
+  max-width: 860px;
+  margin: 0 auto 32px;
+  background: #fff;
+  border: 1.5px solid #2563eb;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.1);
+}
+
+.ai-answer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ai-answer-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-answer-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ai-answer-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.ai-answer-subtitle {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 1px;
+}
+
+.ai-answer-loading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 18px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.ai-answer-loading span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+  animation: aiPulse 1.2s infinite;
+}
+.ai-answer-loading span:nth-child(2) { animation-delay: 0.2s; }
+.ai-answer-loading span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes aiPulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40%           { opacity: 1;   transform: scale(1);   }
+}
+
+.ai-answer-loading p { margin: 0; }
+
+.ai-answer-body {
+  padding: 20px 20px 16px;
+}
+
+.ai-answer-text {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #1e293b;
+}
+
+.ai-answer-text p { margin: 0 0 8px; }
+
+.ai-answer-text br + br { display: none; }
+
+.ai-step {
+  padding-left: 4px;
+  font-weight: 500;
+}
+
+.ai-law-quote {
+  margin: 8px 0;
+  padding: 10px 14px;
+  background: #eff6ff;
+  border-left: 4px solid #2563eb;
+  border-radius: 0 8px 8px 0;
+  font-size: 13.5px;
+  color: #1e3a5f;
+  font-style: italic;
+  line-height: 1.55;
+}
+
+.ai-sources {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ai-sources-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.ai-sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-source-item summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.ai-source-item summary::-webkit-details-marker { display: none; }
+
+.ai-source-ref {
+  font-weight: 700;
+  color: #2563eb;
+  font-size: 13px;
+}
+
+.ai-source-type {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.ai-source-law {
+  margin: 6px 0 4px 16px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-left: 3px solid #93c5fd;
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  color: #334155;
+  font-style: italic;
+  line-height: 1.5;
+}
+
 .search-page {
   min-height: 100vh;
   background: #f9fafb;
