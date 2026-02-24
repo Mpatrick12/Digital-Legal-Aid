@@ -437,3 +437,68 @@
     font-size: 24px;
   }
 }
+
+@media (max-width: 480px) {
+  .dashboard-nav {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .nav-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    justify-content: flex-start;
+  }
+
+  .nav-tab {
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .nav-right {
+    gap: 8px;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .user-details .user-email {
+    display: none;
+  }
+
+  .user-name {
+    font-size: 13px;
+  }
+
+  .welcome-section h1 {
+    font-size: 20px;
+  }
+
+  .welcome-section p {
+    font-size: 14px;
+  }
+
+  .access-grid {
+    gap: 10px;
+  }
+
+  .access-card {
+    padding: 16px;
+  }
+
+  .access-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .lang-selector {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}

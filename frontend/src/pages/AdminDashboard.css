@@ -445,3 +445,64 @@
 .recharts-tooltip-wrapper {
   outline: none;
 }
+
+@media (max-width: 480px) {
+  .admin-dashboard {
+    padding: 1rem 0;
+  }
+
+  .admin-nav {
+    padding: 10px 12px;
+  }
+
+  .page-title {
+    font-size: 1.2rem;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-number {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .chart-card {
+    padding: 14px;
+    overflow-x: auto;
+  }
+
+  .chart-card h3 {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .recharts-wrapper {
+    min-width: 280px;
+  }
+
+  .activity-item {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .admin-nav .nav-tab {
+    font-size: 12px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  .admin-nav .nav-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+}

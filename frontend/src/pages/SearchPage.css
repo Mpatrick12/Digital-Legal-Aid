@@ -431,3 +431,66 @@
     gap: 12px;
   }
 }
+
+@media (max-width: 480px) {
+  .search-header h1 {
+    font-size: 22px;
+  }
+
+  .search-header p {
+    font-size: 14px;
+  }
+
+  .search-page {
+    padding: 1rem 0;
+  }
+
+  .result-card {
+    padding: 16px;
+  }
+
+  .result-title {
+    font-size: 16px;
+  }
+
+  .result-meta {
+    font-size: 12px;
+  }
+
+  .ai-answer-card {
+    padding: 0;
+  }
+
+  .ai-answer-header {
+    padding: 12px 14px;
+  }
+
+  .ai-answer-title {
+    font-size: 14px;
+  }
+
+  .ai-answer-subtitle {
+    font-size: 11px;
+  }
+
+  .ai-answer-body {
+    padding: 12px 14px;
+  }
+
+  .ai-answer-text {
+    font-size: 14px;
+  }
+
+  .ai-law-quote {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .ai-sources-title {
+    font-size: 13px;
+  }
+
+  .ai-source-law {
+    font-size: 13px;
+  }
+}

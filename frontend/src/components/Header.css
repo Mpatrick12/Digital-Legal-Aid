@@ -65,3 +65,27 @@
     font-size: 14px;
   }
 }
+
+@media (max-width: 480px) {
+  .header {
+    padding: 10px 12px;
+  }
+
+  .logo {
+    gap: 8px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .logo-text h1 {
+    font-size: 14px;
+  }
+
+  .sign-in-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}

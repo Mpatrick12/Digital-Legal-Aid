@@ -361,3 +361,39 @@
     flex-direction: column;
   }
 }
+
+@media (max-width: 480px) {
+  .header-content h1 {
+    font-size: 22px;
+  }
+
+  .gazette-header {
+    padding: 1.5rem 0;
+  }
+
+  .gazette-browse {
+    padding: 1rem 0;
+  }
+
+  .doc-card {
+    padding: 16px;
+  }
+
+  .doc-title {
+    font-size: 15px;
+  }
+
+  .doc-meta {
+    font-size: 12px;
+  }
+
+  .filter-group label {
+    font-size: 13px;
+  }
+
+  .filter-group select,
+  .filter-group input {
+    font-size: 15px;
+    padding: 8px 10px;
+  }
+}

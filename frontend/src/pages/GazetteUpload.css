@@ -232,3 +232,45 @@
     padding: 24px;
   }
 }
+
+@media (max-width: 480px) {
+  .upload-page {
+    padding: 1rem;
+  }
+
+  .upload-card {
+    padding: 20px 14px;
+  }
+
+  .upload-header h1 {
+    font-size: 20px;
+  }
+
+  .upload-header p {
+    font-size: 14px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 10px 12px;
+    font-size: 16px; /* Prevents iOS auto-zoom */
+  }
+
+  .file-upload-area {
+    padding: 16px;
+  }
+
+  .file-upload-area p {
+    font-size: 13px;
+  }
+
+  .upload-btn {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+}

@@ -52,3 +52,17 @@ input, select, textarea {
     padding: 0 16px;
   }
 }
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  h1, h2, h3 {
+    word-break: break-word;
+  }
+
+  button, input, select, textarea {
+    font-size: 16px; /* Prevents iOS auto-zoom */
+  }
+}

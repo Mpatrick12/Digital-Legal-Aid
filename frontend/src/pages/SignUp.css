@@ -155,3 +155,43 @@
     font-size: 24px;
   }
 }
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 1rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+
+  .auth-card {
+    padding: 24px 16px;
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .auth-title {
+    font-size: 20px;
+  }
+
+  .auth-subtitle {
+    font-size: 14px;
+  }
+
+  .form-input {
+    padding: 10px 14px;
+    font-size: 16px; /* Prevents iOS auto-zoom */
+  }
+
+  .form-label {
+    font-size: 13px;
+  }
+
+  .auth-btn {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  .auth-footer {
+    font-size: 13px;
+  }
+}

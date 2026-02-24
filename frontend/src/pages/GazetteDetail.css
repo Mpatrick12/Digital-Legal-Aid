@@ -541,3 +541,40 @@
     gap: 0.75rem;
   }
 }
+
+@media (max-width: 480px) {
+  .detail-container {
+    padding: 0.75rem;
+  }
+
+  .document-header {
+    padding: 1rem;
+  }
+
+  .title-section h1 {
+    font-size: 1.2rem;
+  }
+
+  .content-paper {
+    padding: 1rem;
+  }
+
+  .gazette-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .back-btn {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .document-meta {
+    font-size: 13px;
+  }
+
+  .content-text {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+}
