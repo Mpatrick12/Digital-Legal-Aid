@@ -14,10 +14,12 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 32px;
+}
+
+.nav-main-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 40px;
+  gap: 32px;
 }
 
 .nav-left {
@@ -29,6 +31,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .logo-title {
@@ -48,6 +51,107 @@
   display: flex;
   gap: 8px;
   flex: 1;
+}
+
+/* Hamburger — hidden on desktop */
+.hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--text-dark);
+  transition: background 0.2s;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.hamburger-btn:hover {
+  background: #f3f4f6;
+}
+
+/* Mobile drawer — hidden by default */
+.mobile-drawer {
+  display: none;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+  opacity: 0;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
+}
+
+.mobile-drawer.open {
+  max-height: 320px;
+  opacity: 1;
+}
+
+.drawer-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0 8px;
+}
+
+.drawer-tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-dark);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.drawer-tab:hover {
+  background: #f3f4f6;
+}
+
+.drawer-tab.active {
+  background: #eff6ff;
+  color: var(--primary-blue);
+}
+
+.drawer-footer {
+  border-top: 1px solid #f3f4f6;
+  padding: 10px 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drawer-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.drawer-email {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-gray);
+  margin-left: 2px;
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 8px 4px;
 }
 
 .nav-tab {
@@ -396,59 +500,33 @@
   .content-container {
     grid-template-columns: 1fr;
   }
-  
-  /* sidebar stays in natural DOM order (after main-content) on mobile */
 }
 
+/* ── Tablet & mobile: switch to hamburger ── */
 @media (max-width: 768px) {
   .nav-container {
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px 16px;
-    align-items: stretch;
+    padding: 0 16px;
   }
 
-  .nav-left {
-    justify-content: center;
+  .nav-main-row {
+    padding: 12px 0;
+    gap: 0;
   }
 
-  .nav-tabs {
-    width: 100%;
-    justify-content: center;
-    gap: 8px;
-  }
-
+  /* Hide desktop tabs and right section */
+  .nav-tabs,
   .nav-right {
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: nowrap;
-  }
-
-  .user-info {
-    flex: 1;
-    justify-content: center;
-  }
-
-  .user-details {
-    text-align: center;
-  }
-
-  .user-email {
     display: none;
   }
 
-  .access-grid {
-    grid-template-columns: 1fr 1fr;
+  /* Show hamburger */
+  .hamburger-btn {
+    display: flex;
   }
 
-  .welcome-section {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .welcome-section h1 {
-    font-size: 24px;
+  /* Show drawer */
+  .mobile-drawer {
+    display: block;
   }
 
   .content-container {
@@ -458,46 +536,37 @@
   .dashboard-content {
     padding: 20px 0;
   }
+
+  .access-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .welcome-section {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .welcome-section h1 {
+    font-size: 24px;
+  }
 }
 
 @media (max-width: 480px) {
   .nav-container {
-    padding: 10px 12px;
-    gap: 8px;
+    padding: 0 12px;
   }
 
-  .nav-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
-    justify-content: flex-start;
+  .logo-title {
+    font-size: 14px;
   }
 
-  .nav-tab {
-    white-space: nowrap;
-    font-size: 13px;
-    padding: 7px 12px;
-  }
-
-  .language-selector {
-    font-size: 12px;
-    padding: 6px 10px;
-    flex-shrink: 0;
-  }
-
-  .logout-btn {
-    font-size: 13px;
-    padding: 6px 12px;
-    flex-shrink: 0;
-  }
-
-  .user-name {
-    font-size: 13px;
+  .logo-subtitle {
+    font-size: 10px;
   }
 
   .welcome-section {
-    padding: 20px;
+    padding: 20px 16px;
     gap: 12px;
   }
 
@@ -511,7 +580,7 @@
 
   .quick-access,
   .recent-activity {
-    padding: 20px;
+    padding: 18px 16px;
   }
 
   .access-grid {
@@ -539,5 +608,19 @@
 
   .account-info-card {
     padding: 20px;
+  }
+
+  .drawer-tab {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .drawer-user {
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+
+  .drawer-email {
+    font-size: 11px;
   }
 }

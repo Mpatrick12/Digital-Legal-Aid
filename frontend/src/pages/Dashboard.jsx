@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Scale, Shield, BookOpen, Building, Phone, User, Clock, ChevronDown } from 'lucide-react'
+import { Scale, Shield, BookOpen, Building, Phone, User, Clock, Menu, X } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext.jsx'
 import { t } from '../translations.js'
 import './Dashboard.css'
@@ -16,6 +16,9 @@ function Dashboard() {
     role: 'citizen'
   })
   const [activeTab, setActiveTab] = useState('legal-aid')
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const closeMenu = () => setMenuOpen(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -46,7 +49,9 @@ function Dashboard() {
     <div className="dashboard">
       <nav className="dashboard-nav">
         <div className="nav-container">
-          <div className="nav-left">
+
+          {/* ── Single row: logo + desktop tabs + desktop right + hamburger ── */}
+          <div className="nav-main-row">
             <Link to="/" className="nav-logo">
               <Scale size={24} color="#2563eb" />
               <div>
@@ -54,49 +59,103 @@ function Dashboard() {
                 <div className="logo-subtitle">Access to Justice</div>
               </div>
             </Link>
-          </div>
 
-          <div className="nav-tabs">
-            <button 
-              className={`nav-tab ${activeTab === 'legal-aid' ? 'active' : ''}`}
-              onClick={() => setActiveTab('legal-aid')}
-            >
-              <Shield size={18} />
-              {t('nav.legalAid', language)}
-            </button>
-            <button 
-              className={`nav-tab ${activeTab === 'gazette' ? 'active' : ''}`}
-              onClick={() => navigate('/gazette')}
-            >
-              <BookOpen size={18} />
-              {t('nav.gazette', language)}
-            </button>
-          </div>
+            {/* Desktop centre tabs */}
+            <div className="nav-tabs">
+              <button
+                className={`nav-tab ${activeTab === 'legal-aid' ? 'active' : ''}`}
+                onClick={() => setActiveTab('legal-aid')}
+              >
+                <Shield size={18} />
+                {t('nav.legalAid', language)}
+              </button>
+              <button
+                className={`nav-tab ${activeTab === 'gazette' ? 'active' : ''}`}
+                onClick={() => navigate('/gazette')}
+              >
+                <BookOpen size={18} />
+                {t('nav.gazette', language)}
+              </button>
+            </div>
 
-          <div className="nav-right">
+            {/* Desktop right: language + user + logout */}
+            <div className="nav-right">
+              <button
+                className="language-selector"
+                onClick={() => setLanguage(language === 'en' ? 'rw' : 'en')}
+                title="Switch language"
+              >
+                {language === 'en' ? 'EN' : 'RW'}
+              </button>
+              {user.role === 'admin' && (
+                <Link to="/admin/dashboard" className="admin-link-btn">
+                  {t('nav.adminPortal', language)}
+                </Link>
+              )}
+              <div className="user-info">
+                <div className="user-details">
+                  <div className="user-name">{user.name}</div>
+                  <div className="user-email">{user.email}</div>
+                </div>
+              </div>
+              <button onClick={handleLogout} className="logout-btn">
+                {t('nav.logout', language)}
+              </button>
+            </div>
+
+            {/* Mobile hamburger */}
             <button
-              className="language-selector"
-              onClick={() => setLanguage(language === 'en' ? 'rw' : 'en')}
-              title="Switch language"
+              className="hamburger-btn"
+              onClick={() => setMenuOpen(m => !m)}
+              aria-label="Toggle menu"
             >
-              <span>{language === 'en' ? 'EN' : 'RW'}</span>
-              <ChevronDown size={14} />
+              {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
-            {user.role === 'admin' && (
-              <Link to="/admin/dashboard" className="admin-link-btn">
-                {t('nav.adminPortal', language)}
-              </Link>
-            )}
-            <div className="user-info">
-              <div className="user-details">
-                <div className="user-name">{user.name}</div>
-                <div className="user-email">{user.email}</div>
+          </div>
+
+          {/* ── Mobile slide-down drawer ── */}
+          <div className={`mobile-drawer ${menuOpen ? 'open' : ''}`}>
+            <div className="drawer-tabs">
+              <button
+                className={`drawer-tab ${activeTab === 'legal-aid' ? 'active' : ''}`}
+                onClick={() => { setActiveTab('legal-aid'); closeMenu() }}
+              >
+                <Shield size={18} />
+                {t('nav.legalAid', language)}
+              </button>
+              <button
+                className={`drawer-tab ${activeTab === 'gazette' ? 'active' : ''}`}
+                onClick={() => { navigate('/gazette'); closeMenu() }}
+              >
+                <BookOpen size={18} />
+                {t('nav.gazette', language)}
+              </button>
+              {user.role === 'admin' && (
+                <Link to="/admin/dashboard" className="drawer-tab" onClick={closeMenu}>
+                  {t('nav.adminPortal', language)}
+                </Link>
+              )}
+            </div>
+            <div className="drawer-footer">
+              <div className="drawer-user">
+                <User size={16} />
+                <span>{user.name}</span>
+                <span className="drawer-email">{user.email}</span>
+              </div>
+              <div className="drawer-actions">
+                <button
+                  className="language-selector"
+                  onClick={() => setLanguage(language === 'en' ? 'rw' : 'en')}
+                >
+                  {language === 'en' ? '🇬🇧 English' : '🇷🇼 Kinyarwanda'}
+                </button>
+                <button onClick={() => { handleLogout(); closeMenu() }} className="logout-btn">
+                  {t('nav.logout', language)}
+                </button>
               </div>
             </div>
-            <button onClick={handleLogout} className="logout-btn">
-              {t('nav.logout', language)}
-            </button>
           </div>
+
         </div>
       </nav>
 
