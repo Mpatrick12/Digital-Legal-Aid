@@ -62,14 +62,14 @@ function Dashboard() {
               onClick={() => setActiveTab('legal-aid')}
             >
               <Shield size={18} />
-              Legal Aid
+              {t('nav.legalAid', language)}
             </button>
             <button 
               className={`nav-tab ${activeTab === 'gazette' ? 'active' : ''}`}
               onClick={() => navigate('/gazette')}
             >
               <BookOpen size={18} />
-              Official Gazette
+              {t('nav.gazette', language)}
             </button>
           </div>
 
@@ -79,12 +79,12 @@ function Dashboard() {
               onClick={() => setLanguage(language === 'en' ? 'rw' : 'en')}
               title="Switch language"
             >
-              <span>{language === 'en' ? 'English' : 'Kinyarwanda'}</span>
-              <ChevronDown size={16} />
+              <span>{language === 'en' ? 'EN' : 'RW'}</span>
+              <ChevronDown size={14} />
             </button>
             {user.role === 'admin' && (
               <Link to="/admin/dashboard" className="admin-link-btn">
-                Admin Portal
+                {t('nav.adminPortal', language)}
               </Link>
             )}
             <div className="user-info">
@@ -94,7 +94,7 @@ function Dashboard() {
               </div>
             </div>
             <button onClick={handleLogout} className="logout-btn">
-              Logout
+              {t('nav.logout', language)}
             </button>
           </div>
         </div>
@@ -106,46 +106,46 @@ function Dashboard() {
             <div className="welcome-section">
               <User size={48} className="welcome-icon" />
               <div>
-                <h1>Welcome, {user.name.split(' ')[0]}!</h1>
-                <p>Access your personalized legal aid portal</p>
+                <h1>{t('dashboard.welcomeGreeting', language)}, {user.name.split(' ')[0]}!</h1>
+                <p>{t('dashboard.subtitle', language)}</p>
               </div>
             </div>
 
             <div className="quick-access">
               <div className="quick-access-header">
-                <h2>Quick Access</h2>
+                <h2>{t('dashboard.quickAccess', language)}</h2>
               </div>
               <div className="access-grid">
                 <Link to="/search" className="access-card">
                   <div className="access-icon blue">
                     <Shield size={24} />
                   </div>
-                  <h3>Legal Aid & Crime Reporting</h3>
-                  <p>Find step-by-step guidance for reporting crimes</p>
+                  <h3>{t('dashboard.legalAidCard', language)}</h3>
+                  <p>{t('dashboard.legalAidDesc', language)}</p>
                 </Link>
 
                 <Link to="/gazette" className="access-card">
                   <div className="access-icon purple">
                     <BookOpen size={24} />
                   </div>
-                  <h3>Official Gazette</h3>
-                  <p>Search laws and legal documents</p>
+                  <h3>{t('dashboard.gazetteCard', language)}</h3>
+                  <p>{t('dashboard.gazetteDesc', language)}</p>
                 </Link>
 
                 <div className="access-card">
                   <div className="access-icon green">
                     <Building size={24} />
                   </div>
-                  <h3>Notary Directory</h3>
-                  <p>Find certified notaries near you</p>
+                  <h3>{t('dashboard.notaryCard', language)}</h3>
+                  <p>{t('dashboard.notaryDesc', language)}</p>
                 </div>
 
                 <div className="access-card">
                   <div className="access-icon red">
                     <Phone size={24} />
                   </div>
-                  <h3>Emergency Contacts</h3>
-                  <p>Get help immediately</p>
+                  <h3>{t('dashboard.emergencyCard', language)}</h3>
+                  <p>{t('dashboard.emergencyDesc', language)}</p>
                 </div>
               </div>
             </div>
@@ -153,32 +153,32 @@ function Dashboard() {
             <div className="recent-activity">
               <div className="section-header">
                 <Clock size={20} />
-                <h2>Recent Activity</h2>
+                <h2>{t('dashboard.recentActivity', language)}</h2>
               </div>
               <div className="activity-content">
                 <Clock size={48} className="empty-icon" />
-                <p>No recent activity</p>
+                <p>{t('dashboard.noActivity', language)}</p>
               </div>
             </div>
           </div>
 
           <aside className="sidebar">
             <div className="account-info-card">
-              <h3>Account Information</h3>
+              <h3>{t('dashboard.accountInfo', language)}</h3>
               <div className="info-group">
-                <label>Name</label>
+                <label>{t('dashboard.fieldName', language)}</label>
                 <p>{user.name}</p>
               </div>
               <div className="info-group">
-                <label>Email</label>
+                <label>{t('dashboard.fieldEmail', language)}</label>
                 <p>{user.email}</p>
               </div>
               <div className="info-group">
-                <label>Phone</label>
+                <label>{t('dashboard.fieldPhone', language)}</label>
                 <p>{user.phone}</p>
               </div>
               <div className="info-group">
-                <label>District</label>
+                <label>{t('dashboard.fieldDistrict', language)}</label>
                 <p>{user.district}</p>
               </div>
             </div>

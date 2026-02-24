@@ -22,8 +22,26 @@ const translations = {
   },
   dashboard: {
     welcome:         { en: 'Welcome back',        rw: 'Murakaza neza' },
+    welcomeGreeting: { en: 'Welcome',             rw: 'Murakaza neza' },
+    subtitle:        { en: 'Access your personalized legal aid portal', rw: 'Injira mu rubuga rwawe rw\'inkunga z\'amategeko' },
     yourRights:      { en: 'Know Your Rights',    rw: 'Menya Uburenganzira Bwawe' },
-    searchPrompt:    { en: 'Search legal information...', rw: 'Shakisha amakuru y\'amategeko...' }
+    searchPrompt:    { en: 'Search legal information...', rw: 'Shakisha amakuru y\'amategeko...' },
+    quickAccess:     { en: 'Quick Access',        rw: 'Injira Vuba' },
+    legalAidCard:    { en: 'Legal Aid & Crime Reporting', rw: 'Inkunga y\'Amategeko no Gutanga Ibibazo' },
+    legalAidDesc:    { en: 'Find step-by-step guidance for reporting crimes', rw: 'Bona ubuyobozi bw\'intambwe zose zo gutanga ibibazo' },
+    gazetteCard:     { en: 'Official Gazette',   rw: 'Igazeti Nkurunziza' },
+    gazetteDesc:     { en: 'Search laws and legal documents', rw: 'Shakisha amategeko n\'inyandiko z\'amategeko' },
+    notaryCard:      { en: 'Notary Directory',   rw: 'Iciruzeho cya Noteyiri' },
+    notaryDesc:      { en: 'Find certified notaries near you', rw: 'Bona noteyiri zemewe hafi yawe' },
+    emergencyCard:   { en: 'Emergency Contacts', rw: 'Inomero z\'Ineza Mpuruza' },
+    emergencyDesc:   { en: 'Get help immediately', rw: 'Bona ubufasha vuba' },
+    recentActivity:  { en: 'Recent Activity',    rw: 'Ibikorwa Byanyuma' },
+    noActivity:      { en: 'No recent activity', rw: 'Nta bikorwa byanyuma' },
+    accountInfo:     { en: 'Account Information', rw: 'Amakuru y\'Konti' },
+    fieldName:       { en: 'Name',               rw: 'Izina' },
+    fieldEmail:      { en: 'Email',              rw: 'Imeyili' },
+    fieldPhone:      { en: 'Phone',              rw: 'Telefoni' },
+    fieldDistrict:   { en: 'District',           rw: 'Akarere' }
   },
   search: {
     placeholder:     { en: 'Describe what happened (e.g. "someone stole my phone")', rw: 'Sobanura icyabaye (urugero: "bamwibiye telefoni")' },
