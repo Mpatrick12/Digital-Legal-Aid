@@ -377,6 +377,38 @@
   border-color: var(--primary-blue);
 }
 
+/* non-functional cards — no hover lift */
+.access-card--soon {
+  cursor: default;
+  opacity: 0.75;
+  position: relative;
+}
+
+.access-card--soon:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #e5e7eb;
+}
+
+.coming-soon-badge {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 3px 10px;
+  background: #f3f4f6;
+  color: var(--text-gray);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.not-set {
+  color: var(--text-gray);
+  font-style: italic;
+  font-size: 13px;
+}
+
 .access-icon {
   width: 48px;
   height: 48px;

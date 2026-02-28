@@ -191,20 +191,22 @@ function Dashboard() {
                   <p>{t('dashboard.gazetteDesc', language)}</p>
                 </Link>
 
-                <div className="access-card">
+                <div className="access-card access-card--soon">
                   <div className="access-icon green">
                     <Building size={24} />
                   </div>
                   <h3>{t('dashboard.notaryCard', language)}</h3>
                   <p>{t('dashboard.notaryDesc', language)}</p>
+                  <span className="coming-soon-badge">Coming Soon</span>
                 </div>
 
-                <div className="access-card">
+                <div className="access-card access-card--soon">
                   <div className="access-icon red">
                     <Phone size={24} />
                   </div>
                   <h3>{t('dashboard.emergencyCard', language)}</h3>
                   <p>{t('dashboard.emergencyDesc', language)}</p>
+                  <span className="coming-soon-badge">Coming Soon</span>
                 </div>
               </div>
             </div>
@@ -234,7 +236,7 @@ function Dashboard() {
               </div>
               <div className="info-group">
                 <label>{t('dashboard.fieldPhone', language)}</label>
-                <p>{user.phone}</p>
+                <p>{user.phone && user.phone !== 'N/A' ? user.phone : <span className="not-set">Not provided</span>}</p>
               </div>
               <div className="info-group">
                 <label>{t('dashboard.fieldDistrict', language)}</label>
