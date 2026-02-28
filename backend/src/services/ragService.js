@@ -290,6 +290,19 @@ ${contextBlock}`
   return responseText
 }
 
+// ─── Greeting short-circuit ───────────────────────────────────────────────────
+
+const GREETING_PATTERNS = /^\s*(hello|hi|hey|hie|howdy|sup|yo|good\s*(morning|afternoon|evening|day)|muraho|mwaramutse|mwiriwe|bonjour|salut|hola|ciao|greetings|what'?s\s*up|how\s*are\s*you|how\s*r\s*u)\s*[!?.]*\s*$/i
+
+const GREETING_REPLIES = {
+  en: "Hey! I'm your Legal Aid Assistant, powered by the Rwanda Penal Code. 😊 What can I help you with today?",
+  rw: "Muraho! Ndi Umufasha wawe w'Amategeko, bishingiye ku Mategeko y'u Rwanda. 😊 Nigute nakugira inkunga uyu munsi?"
+}
+
+function isGreeting(query) {
+  return GREETING_PATTERNS.test(query.trim())
+}
+
 // ─── Combined RAG pipeline ────────────────────────────────────────────────────
 
 /**
@@ -301,6 +314,11 @@ ${contextBlock}`
  * @returns {{ response: string, sources: Array }}
  */
 export async function ragPipeline(userQuery, language = 'en', history = []) {
+  // Short-circuit: return a friendly greeting without hitting the AI or DB
+  if (isGreeting(userQuery)) {
+    return { response: GREETING_REPLIES[language] || GREETING_REPLIES.en, sources: [] }
+  }
+
   const articles = await retrieveRelevantArticles(userQuery)
   const response = await generateLegalResponse(userQuery, articles, language, history)
 
