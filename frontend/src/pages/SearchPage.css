@@ -175,10 +175,54 @@
   background: white;
   border-bottom: 1px solid var(--border);
   padding: 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.search-nav .nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.search-nav .nav-logo:hover {
+  opacity: 0.8;
+}
+
+.nav-link {
+  padding: 8px 20px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-dark);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  background: var(--light-blue);
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
 }
 
 .search-content {
-  padding: 60px 20px;
+  padding: 48px 20px;
 }
 
 .search-header {
@@ -408,41 +452,67 @@
   .search-header h1 {
     font-size: 28px;
   }
-  
+
   .search-header p {
     font-size: 16px;
   }
-  
+
+  .search-content {
+    padding: 32px 16px;
+  }
+
+  .search-header {
+    margin-bottom: 36px;
+  }
+
   .search-bar {
     flex-direction: column;
     align-items: stretch;
+    padding: 12px 16px;
+    gap: 10px;
   }
-  
+
   .search-btn {
     width: 100%;
   }
-  
+
   .result-card {
-    padding: 24px;
+    padding: 20px;
   }
-  
+
   .result-header {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+  }
+
+  .result-header h3 {
+    font-size: 18px;
+  }
+
+  .search-suggestions {
+    gap: 8px;
   }
 }
 
 @media (max-width: 480px) {
+  .search-nav .nav-logo span {
+    display: none;
+  }
+
   .search-header h1 {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .search-header p {
     font-size: 14px;
   }
 
-  .search-page {
-    padding: 1rem 0;
+  .search-content {
+    padding: 20px 12px;
+  }
+
+  .search-header {
+    margin-bottom: 24px;
   }
 
   .result-card {

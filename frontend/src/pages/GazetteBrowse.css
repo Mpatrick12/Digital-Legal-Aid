@@ -131,7 +131,7 @@
 }
 
 .gazette-content {
-  padding: 48px 0;
+  padding: 40px 0;
 }
 
 .content-header {
@@ -184,7 +184,7 @@
 
 .documents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(350px, 100%), 1fr));
   gap: 24px;
 }
 
@@ -336,6 +336,29 @@
 }
 
 @media (max-width: 768px) {
+  /* gazette nav */
+  .gazette-nav .nav-container {
+    padding: 0 16px;
+  }
+
+  .gazette-nav .nav-logo span {
+    font-size: 14px;
+  }
+
+  .nav-actions {
+    gap: 6px;
+  }
+
+  .nav-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* header */
+  .gazette-header {
+    padding: 32px 0;
+  }
+
   .header-content {
     flex-direction: column;
     text-align: center;
@@ -353,6 +376,17 @@
     width: 100%;
   }
 
+  /* content */
+  .gazette-content {
+    padding: 24px 0;
+  }
+
+  .content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
   .documents-grid {
     grid-template-columns: 1fr;
   }
@@ -363,16 +397,34 @@
 }
 
 @media (max-width: 480px) {
+  /* nav – hide logo text, just show icon */
+  .gazette-nav .nav-logo span {
+    display: none;
+  }
+
+  .gazette-nav .nav-container {
+    padding: 0 12px;
+  }
+
+  .upload-btn-nav {
+    display: none; /* hide upload button on small phones — accessible from dashboard */
+  }
+
+  .nav-btn {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
   .header-content h1 {
     font-size: 22px;
   }
 
   .gazette-header {
-    padding: 1.5rem 0;
+    padding: 24px 0;
   }
 
-  .gazette-browse {
-    padding: 1rem 0;
+  .gazette-content {
+    padding: 16px 0;
   }
 
   .doc-card {

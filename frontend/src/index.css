@@ -23,6 +23,7 @@ body {
   color: var(--text-dark);
   background-color: var(--background);
   line-height: 1.6;
+  overflow-x: hidden; /* prevent horizontal scroll on all pages */
 }
 
 a {
