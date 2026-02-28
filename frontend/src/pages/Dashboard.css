@@ -555,32 +555,21 @@
 }
 
 @media (max-width: 900px) {
-  /* Hide user email — keep name + logout only */
-  .user-email {
+  /* Switch to hamburger at 900px — hide all desktop nav items */
+  .user-email,
+  .nav-tabs,
+  .nav-right {
     display: none;
   }
 
-  .nav-right {
-    gap: 8px;
+  .hamburger-btn {
+    display: flex;
   }
 
-  .language-selector {
-    padding: 6px 8px;
-    font-size: 12px;
+  .mobile-drawer {
+    display: block;
   }
 
-  .logout-btn {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
-
-  .user-name {
-    font-size: 13px;
-  }
-}
-
-/* ── Tablet & mobile: switch to hamburger ── */
-@media (max-width: 768px) {
   .nav-container {
     padding: 0 16px;
   }
@@ -588,22 +577,6 @@
   .nav-main-row {
     padding: 12px 0;
     gap: 0;
-  }
-
-  /* Hide desktop tabs and right section */
-  .nav-tabs,
-  .nav-right {
-    display: none;
-  }
-
-  /* Show hamburger */
-  .hamburger-btn {
-    display: flex;
-  }
-
-  /* Show drawer */
-  .mobile-drawer {
-    display: block;
   }
 
   .content-container {
@@ -660,27 +633,37 @@
     padding: 18px 16px;
   }
 
+  /* 1 column on small phones */
   .access-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .access-card {
-    padding: 14px;
-  }
-
-  .access-card h3 {
-    font-size: 13px;
-  }
-
-  .access-card p {
-    font-size: 12px;
+    padding: 18px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
   }
 
   .access-icon {
-    width: 36px;
-    height: 36px;
-    margin-bottom: 10px;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .access-card h3 {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .access-card p {
+    font-size: 13px;
+  }
+
+  .coming-soon-badge {
+    margin-top: 6px;
   }
 
   .account-info-card {
