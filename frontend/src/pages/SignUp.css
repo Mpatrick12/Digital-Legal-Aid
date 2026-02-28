@@ -115,7 +115,7 @@
 .auth-button {
   width: 100%;
   padding: 14px;
-  background: var(--text-dark);
+  background: var(--primary-blue);
   color: white;
   border-radius: 8px;
   font-size: 16px;
@@ -124,7 +124,8 @@
 }
 
 .auth-button:hover:not(:disabled) {
-  background: #111827;
+  background: var(--dark-blue);
+  transform: translateY(-1px);
 }
 
 .auth-button:disabled {
@@ -165,8 +166,10 @@
 /* Phone */
 @media (max-width: 480px) {
   .auth-page {
-    padding: 64px 14px 24px;
+    padding: 64px 14px 40px;
     justify-content: flex-start;
+    min-height: 100vh;
+    overflow-y: auto;
   }
 
   .back-to-home {
