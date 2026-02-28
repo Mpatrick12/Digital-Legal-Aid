@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import axios from 'axios'
-import { MessageCircle, X, Send, Globe, ChevronDown, Scale, Maximize2, Minimize2 } from 'lucide-react'
+import { MessageCircle, X, Send, Globe, ChevronDown, Scale, Maximize2, Minimize2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
 import { getApiUrl } from '../config'
 import './ChatWidget.css'
 
@@ -19,7 +19,13 @@ const LANG_LABELS = {
   rw: { toggle: 'English', current: 'Kinyarwanda' }
 }
 
-const SOURCE_LABEL = { en: 'Legal Sources', rw: 'Inkomoko y\'Amategeko' }
+const VOICE_LABELS = {
+  en: { autoSpeak: 'Auto-speak', listening: 'Listening…', micTitle: 'Speak your message', speakTitle: 'Read aloud', stopTitle: 'Stop speaking' },
+  rw: { autoSpeak: 'Vuga igisubizo', listening: 'Ntega inzebe…', micTitle: 'Vuga ubutumwa bwawe', speakTitle: 'Soma mu ijwi', stopTitle: 'Hagarika' }
+}
+
+// Languages supported by Web Speech API for our two languages
+const SPEECH_LANG = { en: 'en-US', rw: 'rw-RW' }
 
 export default function ChatWidget({ language: externalLanguage = 'en' }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -31,8 +37,81 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
   const [sessionId, setSessionId] = useState(null)
   const [hasUnread, setHasUnread] = useState(false)
 
+  // Voice states
+  const [isListening, setIsListening] = useState(false)
+  const [autoSpeak, setAutoSpeak] = useState(false)
+  const [speakingId, setSpeakingId] = useState(null)   // id of message currently being spoken
+
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
+  const recognitionRef = useRef(null)   // holds SpeechRecognition instance
+
+  // ── Voice Output ────────────────────────────────────────────────────────────
+  const speakText = useCallback((text, msgId) => {
+    if (!window.speechSynthesis) return
+    // Cancel any currently playing speech first
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = SPEECH_LANG[language] || 'en-US'
+    utterance.rate = 0.9
+    utterance.pitch = 1
+    utterance.onstart  = () => setSpeakingId(msgId)
+    utterance.onend    = () => setSpeakingId(null)
+    utterance.onerror  = () => setSpeakingId(null)
+    window.speechSynthesis.speak(utterance)
+  }, [language])
+
+  const stopSpeaking = useCallback(() => {
+    window.speechSynthesis?.cancel()
+    setSpeakingId(null)
+  }, [])
+
+  // Stop speaking when chat is closed
+  useEffect(() => {
+    if (!isOpen) stopSpeaking()
+  }, [isOpen, stopSpeaking])
+
+  // ── Voice Input ─────────────────────────────────────────────────────────────
+  const startListening = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      alert('Voice input is not supported in this browser. Please use Chrome or Edge.')
+      return
+    }
+    // Stop any ongoing recognition first
+    if (recognitionRef.current) {
+      recognitionRef.current.abort()
+    }
+    const recognition = new SpeechRecognition()
+    recognition.lang = SPEECH_LANG[language] || 'en-US'
+    recognition.interimResults = false
+    recognition.maxAlternatives = 1
+    recognition.continuous = false
+
+    recognition.onstart = () => setIsListening(true)
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript
+      setIsListening(false)
+      // Put text in input and auto-send
+      sendVoiceMessage(transcript)
+    }
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error)
+      setIsListening(false)
+    }
+
+    recognition.onend = () => setIsListening(false)
+
+    recognitionRef.current = recognition
+    recognition.start()
+  }, [language]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop()
+    setIsListening(false)
+  }, [])
 
   // Sync language from parent context
   useEffect(() => {
@@ -79,7 +158,11 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
   const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed || isTyping) return
+    await dispatchMessage(trimmed)
+  }
 
+  // Shared send logic used by both text input and voice
+  const dispatchMessage = async (trimmed) => {
     const userMessage = {
       id: Date.now(),
       role: 'user',
@@ -128,6 +211,11 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
       }
 
       setMessages(prev => [...prev, assistantMessage])
+
+      // Auto-speak AI response if toggle is on
+      if (autoSpeak) {
+        speakText(data.data.response, assistantMessage.id)
+      }
     } catch (err) {
       const errorMsg = {
         id: Date.now() + 1,
@@ -143,6 +231,12 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
     } finally {
       setIsTyping(false)
     }
+  }
+
+  // Called after voice recognition returns a transcript
+  const sendVoiceMessage = (transcript) => {
+    if (!transcript || isTyping) return
+    dispatchMessage(transcript)
   }
 
   const handleKeyDown = (e) => {
@@ -187,6 +281,15 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
               </div>
             </div>
             <div className="chat-panel__header-right">
+              {/* Auto-speak toggle */}
+              <button
+                className={`chat-icon-btn chat-autospeak-btn ${autoSpeak ? 'chat-autospeak-btn--on' : ''}`}
+                onClick={() => { setAutoSpeak(p => !p); stopSpeaking() }}
+                title={VOICE_LABELS[language].autoSpeak}
+                aria-label={VOICE_LABELS[language].autoSpeak}
+              >
+                {autoSpeak ? <Volume2 size={15} /> : <VolumeX size={15} />}
+              </button>
               <button className="chat-lang-toggle" onClick={toggleLanguage} title="Switch Language">
                 <Globe size={14} />
                 <span>{LANG_LABELS[language].toggle}</span>
@@ -213,9 +316,22 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
                   </div>
                 )}
                 <div className="chat-message__content">
-                  <div className="chat-message__bubble">
-                    {/* Render message with basic markdown (bold, line breaks) */}
-                    {formatMessageContent(msg.content)}
+                  <div className="chat-message__bubble-row">
+                    <div className="chat-message__bubble">
+                      {/* Render message with basic markdown (bold, line breaks) */}
+                      {formatMessageContent(msg.content)}
+                    </div>
+                    {/* Speaker button on assistant messages */}
+                    {msg.role === 'assistant' && (
+                      <button
+                        className={`chat-speak-btn ${speakingId === msg.id ? 'chat-speak-btn--active' : ''}`}
+                        onClick={() => speakingId === msg.id ? stopSpeaking() : speakText(msg.content, msg.id)}
+                        title={speakingId === msg.id ? VOICE_LABELS[language].stopTitle : VOICE_LABELS[language].speakTitle}
+                        aria-label={speakingId === msg.id ? VOICE_LABELS[language].stopTitle : VOICE_LABELS[language].speakTitle}
+                      >
+                        {speakingId === msg.id ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                      </button>
+                    )}
                   </div>
 
                   {/* Source citations */}
@@ -270,25 +386,44 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
 
           {/* Input */}
           <div className="chat-input-area">
-            <textarea
-              ref={inputRef}
-              className="chat-input"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={PLACEHOLDERS[language]}
-              rows={1}
-              disabled={isTyping}
-              maxLength={500}
-            />
-            <button
-              className={`chat-send-btn ${input.trim() && !isTyping ? 'chat-send-btn--active' : ''}`}
-              onClick={sendMessage}
-              disabled={!input.trim() || isTyping}
-              aria-label="Send"
-            >
-              <Send size={18} />
-            </button>
+            {/* Listening indicator */}
+            {isListening && (
+              <div className="chat-listening">
+                <span className="chat-listening__dot" />
+                {VOICE_LABELS[language].listening}
+              </div>
+            )}
+            <div className="chat-input-row">
+              <textarea
+                ref={inputRef}
+                className="chat-input"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isListening ? VOICE_LABELS[language].listening : PLACEHOLDERS[language]}
+                rows={1}
+                disabled={isTyping || isListening}
+                maxLength={500}
+              />
+              {/* Mic button */}
+              <button
+                className={`chat-mic-btn ${isListening ? 'chat-mic-btn--listening' : ''}`}
+                onClick={isListening ? stopListening : startListening}
+                disabled={isTyping}
+                title={VOICE_LABELS[language].micTitle}
+                aria-label={VOICE_LABELS[language].micTitle}
+              >
+                {isListening ? <MicOff size={17} /> : <Mic size={17} />}
+              </button>
+              <button
+                className={`chat-send-btn ${input.trim() && !isTyping ? 'chat-send-btn--active' : ''}`}
+                onClick={sendMessage}
+                disabled={!input.trim() || isTyping}
+                aria-label="Send"
+              >
+                <Send size={18} />
+              </button>
+            </div>
           </div>
           <div className="chat-footer">
             {language === 'en'
