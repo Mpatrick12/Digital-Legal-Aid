@@ -105,6 +105,63 @@ export async function retrieveRelevantArticles(userQuery, topK = 5) {
   }
 }
 
+// ─── Context cleaning helpers ─────────────────────────────────────────────────
+
+/**
+ * Remove any line where the exact same phrase (≥4 words) appears more than twice.
+ * This catches the "urukiko rwa polisi ruri mu Rwanda" style looping DB content.
+ */
+function cleanRepetitiveLines(text, maxPhraseRepeat = 2) {
+  const lines = text.split('\n')
+  const phraseCount = {}
+
+  // Count every 4-word window across all lines
+  lines.forEach(line => {
+    const words = line.trim().split(/\s+/)
+    for (let i = 0; i <= words.length - 4; i++) {
+      const phrase = words.slice(i, i + 4).join(' ').toLowerCase()
+      phraseCount[phrase] = (phraseCount[phrase] || 0) + 1
+    }
+  })
+
+  // Keep a line only if none of its 4-word phrases exceed the repeat cap
+  const cleaned = lines.filter(line => {
+    const words = line.trim().split(/\s+/)
+    for (let i = 0; i <= words.length - 4; i++) {
+      const phrase = words.slice(i, i + 4).join(' ').toLowerCase()
+      if (phraseCount[phrase] > maxPhraseRepeat) return false
+    }
+    return true
+  })
+
+  return cleaned.join('\n')
+}
+
+/**
+ * Truncate AI response if it repeats the same sentence 3+ times.
+ * Sentences are split on . ! ?
+ */
+function deduplicateResponse(text) {
+  const VISIT_MSG = 'Baza polisi yo hafi yawe kugirango ubone amakuru arambuye.'
+  const sentences = text.split(/(?<=[.!?])\s+/)
+  const seen = {}
+  const result = []
+
+  for (const sentence of sentences) {
+    const key = sentence.trim().toLowerCase()
+    if (!key) continue
+    seen[key] = (seen[key] || 0) + 1
+    if (seen[key] >= 3) {
+      // Repetition threshold hit — truncate here
+      result.push(VISIT_MSG)
+      return result.join(' ')
+    }
+    result.push(sentence.trim())
+  }
+
+  return result.join(' ')
+}
+
 // ─── Step 2: Generate AI response using retrieved articles ───────────────────
 
 /**
@@ -124,15 +181,23 @@ export async function generateLegalResponse(
   conversationHistory = []
 ) {
   // Build the context block from retrieved articles
+  // — each article text is capped at 500 chars and repetitive lines are stripped
   const contextBlock = retrievedArticles.length > 0
     ? retrievedArticles.map((article, i) => {
-        const lawText = article.originalText?.[language]
+        const rawLawText = article.originalText?.[language]
           || article.originalText?.en
           || ''
+        // Truncate to 500 chars then clean repeated phrases
+        const lawText = cleanRepetitiveLines(
+          rawLawText.length > 500 ? rawLawText.slice(0, 500) + '…' : rawLawText
+        )
 
-        const explanation = article.simplifiedExplanation?.[language]
+        const rawExplanation = article.simplifiedExplanation?.[language]
           || article.simplifiedExplanation?.en
           || ''
+        const explanation = cleanRepetitiveLines(
+          rawExplanation.length > 500 ? rawExplanation.slice(0, 500) + '…' : rawExplanation
+        )
 
         const steps = (article.reportingSteps || [])
           .map(s => `  ${s.stepNumber}. ${s.description?.[language] || s.description?.en || ''}`)
@@ -160,32 +225,31 @@ ${whereToReport ? `Where to Report: ${whereToReport}` : ''}
 
   // System prompt
   const systemPrompt = language === 'rw'
-    ? `Uri inzobere mu mategeko y'u Rwanda. Gusubiza neza no ku buryo bw'itegeko.
+    ? `Uri Umufasha w'Amategeko y'u Rwanda. Akazi kawe KA GUSA ni gufasha inzirakarengane gusobanukirwa uburenganzira bwazo n'intambwe zikurikira.
 
-ITEGEKO UGOMBA GUKURIKIZA:
-1. Soma neza ikibazo cy'umuturage hanyuma usesengure icyaha cyakozwe.
-2. Vuga neza ingingo (Article) ihuye n'ikibazo, uhite UYISHYIRAMO: **[Ingingo ya X]**: "[ubusobanuro bwayo nyine]"
-3. Vuga igihano: imyaka y'igifungo cyangwa inzigo nk'uko itegeko rivuga.
-4. Tanga intambwe 4-6 zo gutunga ikibazo NONAHA, zitangira ku guhita ujya polisi.
-5. NTUZASANGE interuro nk'izi: "Mbabarira", "Ni ikibazo gihambaye", "Nzagufasha" — tangira igisubizo KIRI KU MUTWE.
-6. Niba ikibazo kitandikirwa mu mategeko watanzwe, bivuge nti: "Amategeko atanzwe ntareba ikibazo cyanyu. Jya polisi yo hafi."
-7. Rangiza na: "Ihutirwa: Polisi y'Igihugu cy'u Rwanda — 112"
+IMANGIRO IKOMEYE:
+- Subiza GUSA ukurikije ingingo z'amategeko zitanzwe hasi
+- Niba amakuru adahagije, vuga nti: "Nta makuru arambuye mfite kuri ubu, baza polisi yo hafi yawe"
+- NTUZASUBIREMO interuro imwe inshuro zirenze imwe
+- Subiza mu magambo make — munsi ya interuro 10
+- Gorora, sobanura, kandi tanga inama zinoze
+- Subiza YOSE mu Kinyarwanda
+- Rangiza na intambwe IMWE igaragara umuturage agomba gukora
 
-AMAKURU Y'AMATEGEKO:
+AMAKURU Y'AMATEGEKO Y'U RWANDA:
 ${contextBlock}`
-    : `You are a strict legal reference tool for Rwanda. Analyse the user's situation and deliver precise legal information — nothing more, nothing less.
+    : `You are a Rwandan legal aid assistant. Your ONLY job is to help crime victims understand their rights and next steps.
 
-MANDATORY RULES — NO EXCEPTIONS:
-1. FIRST LINE must identify the crime: e.g. "This constitutes [Crime Type] under the Rwanda Penal Code."
-2. IMMEDIATELY quote the applicable article: **Article [number]** (Rwanda Penal Code): "[exact article text from sources]"
-3. State the PENALTY explicitly — imprisonment term and/or fine exactly as written in the law.
-4. Give exactly 4-6 numbered steps the person must take RIGHT NOW (start from: go to nearest police station).
-5. DO NOT open with sympathy or filler: no "I'm sorry", "Don't worry", "I'm here to help", "As a Legal Aid Assistant". Start with the legal analysis directly.
-6. DO NOT invent articles, penalties, or facts not present in the provided legal texts.
-7. If the situation is not covered by the provided articles, say exactly: "The provided articles do not directly address this situation. Visit the nearest police station or Legal Aid Forum Rwanda."
-8. Final line must be: "Emergency: Rwanda National Police — 112"
+STRICT RULES:
+- Answer ONLY based on the legal articles provided below as context
+- If the context doesn't have relevant info, say "I don't have specific information on that, please visit your nearest police station"
+- NEVER repeat the same sentence more than once
+- Keep responses under 150 words
+- Be warm, clear and practical
+- If the user writes in Kinyarwanda, respond fully in Kinyarwanda
+- Always end with one clear action the user should take
 
-LEGAL ARTICLES TO USE (ONLY THESE — DO NOT GO OUTSIDE THESE):
+CONTEXT FROM RWANDAN LAW:
 ${contextBlock}`
 
   // Build messages array for Groq
@@ -211,11 +275,16 @@ ${contextBlock}`
     top_p: 0.9
   })
 
-  const responseText = completion.choices[0]?.message?.content || ''
+  const rawResponse = completion.choices[0]?.message?.content || ''
+
+  // Post-process: truncate if any sentence is repeated 3+ times
+  const responseText = deduplicateResponse(rawResponse)
 
   logger.info('Groq response received', {
     tokens: completion.usage?.total_tokens,
-    responseLength: responseText.length
+    rawLength: rawResponse.length,
+    cleanedLength: responseText.length,
+    wasTruncated: responseText.length < rawResponse.length
   })
 
   return responseText
