@@ -14,9 +14,10 @@ function Header() {
               <p>Rwanda Justice Portal</p>
             </div>
           </Link>
-          <Link to="/signin" className="sign-in-btn">
-            Sign In
-          </Link>
+          <div className="header-auth">
+            <Link to="/signin" className="sign-in-btn">Sign In</Link>
+            <Link to="/signup" className="sign-up-btn">Get Started</Link>
+          </div>
         </div>
       </div>
     </header>

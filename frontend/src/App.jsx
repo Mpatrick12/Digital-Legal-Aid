@@ -72,7 +72,7 @@ function App() {
         } 
       />
     </Routes>
-      {isLoggedIn && <ChatWidget language={language} />}
+      <ChatWidget language={language} />
     </>
   )
 }
