@@ -427,14 +427,14 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.section-header {
+.dashboard .section-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
 }
 
-.section-header h2 {
+.dashboard .section-header h2 {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-dark);
