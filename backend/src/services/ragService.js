@@ -223,31 +223,24 @@ ${whereToReport ? `Where to Report: ${whereToReport}` : ''}
       }).join('\n\n---\n\n')
     : 'No specific legal articles were found for this query.'
 
-  // System prompt
-  const systemPrompt = language === 'rw'
-    ? `Uri Umufasha w'Amategeko y'u Rwanda. Akazi kawe KA GUSA ni gufasha inzirakarengane gusobanukirwa uburenganzira bwazo n'intambwe zikurikira.
+  // System prompt — single strict version, language determined by user's message
+  const systemPrompt = `You are a professional Rwandan legal aid assistant. Your job is to help people understand their rights under Rwandan law.
 
-IMANGIRO IKOMEYE:
-- Subiza GUSA ukurikije ingingo z'amategeko zitanzwe hasi
-- Niba amakuru adahagije, vuga nti: "Nta makuru arambuye mfite kuri ubu, baza polisi yo hafi yawe"
-- NTUZASUBIREMO interuro imwe inshuro zirenze imwe
-- Subiza mu magambo make — munsi ya interuro 10
-- Gorora, sobanura, kandi tanga inama zinoze
-- Subiza YOSE mu Kinyarwanda
-- Rangiza na intambwe IMWE igaragara umuturage agomba gukora
+LANGUAGE RULE — MOST IMPORTANT:
+- Detect the language the user is writing in (English or Kinyarwanda)
+- Respond ENTIRELY in that same language
+- NEVER mix languages in a single response
+- NEVER add translations or parenthetical explanations like (meaning: ...)
+- If the user writes in Kinyarwanda, your ENTIRE response must be in Kinyarwanda only
+- If the user writes in English, your ENTIRE response must be in English only
 
-AMAKURU Y'AMATEGEKO Y'U RWANDA:
-${contextBlock}`
-    : `You are a Rwandan legal aid assistant. Your ONLY job is to help crime victims understand their rights and next steps.
-
-STRICT RULES:
-- Answer ONLY based on the legal articles provided below as context
-- If the context doesn't have relevant info, say "I don't have specific information on that, please visit your nearest police station"
+CONTENT RULES:
+- Answer based on the legal articles provided below
+- If the context has no relevant info, say clearly: "I don't have specific information on that — please visit your nearest police station"
 - NEVER repeat the same sentence more than once
 - Keep responses under 150 words
-- Be warm, clear and practical
-- If the user writes in Kinyarwanda, respond fully in Kinyarwanda
-- Always end with one clear action the user should take
+- Be direct, warm, and practical
+- End with one clear action step
 
 CONTEXT FROM RWANDAN LAW:
 ${contextBlock}`
@@ -295,12 +288,33 @@ ${contextBlock}`
 const GREETING_PATTERNS = /^\s*(hello|hi|hey|hie|howdy|sup|yo|good\s*(morning|afternoon|evening|day)|muraho|mwaramutse|mwiriwe|bonjour|salut|hola|ciao|greetings|what'?s\s*up|how\s*are\s*you|how\s*r\s*u)\s*[!?.]*\s*$/i
 
 const GREETING_REPLIES = {
-  en: "Hey! I'm your Legal Aid Assistant, powered by the Rwanda Penal Code. 😊 What can I help you with today?",
-  rw: "Muraho! Ndi Umufasha wawe w'Amategeko, bishingiye ku Mategeko y'u Rwanda. 😊 Nigute nakugira inkunga uyu munsi?"
+  en: "Hey! I'm your Legal Aid Assistant, powered by the Rwanda Penal Code. What can I help you with today?",
+  rw: "Muraho! Ndi Umufasha wawe w'Amategeko, bishingiye ku Mategeko y'u Rwanda. Nakugira inkunga iki uyu munsi?"
 }
+
+// Catch meta/conversational messages that are NOT legal questions
+const SMALLTALK_PATTERNS = [
+  // Language permission questions
+  { re: /kinyarwanda/i, reply: { en: "Of course! Feel free to write in Kinyarwanda. I\'ll respond in Kinyarwanda too. What happened?", rw: "Yego! Andika mu Kinyarwanda, nzasubiza mu Kinyarwanda. Ni iki cyabaye?" } },
+  // English permission questions
+  { re: /can i (speak|ask|write|talk).*english/i, reply: { en: "Yes, go ahead in English. What can I help you with?", rw: "Yego, andika mu Cyongereza. Nakugira inkunga iki?" } },
+  // Thanks
+  { re: /^\s*(thank(s| you)|merci|murakoze|asante|urakoze)\s*[!.]*\s*$/i, reply: { en: "You're welcome. Is there anything else I can help you with?", rw: "Ntacyo. Hari ikindi nakugira inkunga?" } },
+  // OK / understood
+  { re: /^\s*(ok(ay)?|got it|understood|alright|sure|fine|noted)\s*[!.]*\s*$/i, reply: { en: "Great. What would you like to know?", rw: "Nziza. Ni iki ushaka kumenya?" } }
+]
 
 function isGreeting(query) {
   return GREETING_PATTERNS.test(query.trim())
+}
+
+function getSmallTalkReply(query, language) {
+  for (const { re, reply } of SMALLTALK_PATTERNS) {
+    if (re.test(query.trim())) {
+      return reply[language] || reply.en
+    }
+  }
+  return null
 }
 
 // ─── Combined RAG pipeline ────────────────────────────────────────────────────
@@ -314,9 +328,13 @@ function isGreeting(query) {
  * @returns {{ response: string, sources: Array }}
  */
 export async function ragPipeline(userQuery, language = 'en', history = []) {
-  // Short-circuit: return a friendly greeting without hitting the AI or DB
+  // Short-circuit: greetings and small-talk — no AI or DB call needed
   if (isGreeting(userQuery)) {
     return { response: GREETING_REPLIES[language] || GREETING_REPLIES.en, sources: [] }
+  }
+  const smallTalkReply = getSmallTalkReply(userQuery, language)
+  if (smallTalkReply) {
+    return { response: smallTalkReply, sources: [] }
   }
 
   const articles = await retrieveRelevantArticles(userQuery)
