@@ -19,6 +19,8 @@ const LANG_LABELS = {
   rw: { toggle: 'English', current: 'Kinyarwanda' }
 }
 
+const SOURCE_LABEL = { en: 'Legal Sources', rw: 'Inkomoko y\'Amategeko' }
+
 const VOICE_LABELS = {
   en: { autoSpeak: 'Auto-speak', listening: 'Listening…', micTitle: 'Speak your message', speakTitle: 'Read aloud', stopTitle: 'Stop speaking' },
   rw: { autoSpeak: 'Vuga igisubizo', listening: 'Ntega inzebe…', micTitle: 'Vuga ubutumwa bwawe', speakTitle: 'Soma mu ijwi', stopTitle: 'Hagarika' }
