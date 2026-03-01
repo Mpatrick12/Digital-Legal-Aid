@@ -46,14 +46,15 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
 
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
-  const recognitionRef = useRef(null)   // holds SpeechRecognition instance
+  const recognitionRef = useRef(null)
+  const voicesRef = useRef([])           // cached voice list
 
-  // Pre-load voices so they're available immediately on first speak
+  // Load and cache voices — they load async on first page visit
   useEffect(() => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.getVoices()
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices()
-    }
+    if (!window.speechSynthesis) return
+    const load = () => { voicesRef.current = window.speechSynthesis.getVoices() }
+    load()
+    window.speechSynthesis.onvoiceschanged = load
   }, [])
 
   // ── Voice Output ────────────────────────────────────────────────────────────
@@ -61,28 +62,46 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
     if (!window.speechSynthesis) return
     window.speechSynthesis.cancel()
 
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = SPEECH_LANG[language] || 'en-US'
-    utterance.rate = 1.05    // Natural conversational pace
-    utterance.pitch = 1.1    // Slightly higher = less flat
-    utterance.volume = 1     // Full volume
+    const doSpeak = () => {
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang   = SPEECH_LANG[language] || 'en-US'
+      utterance.rate   = 1.0
+      utterance.pitch  = 1.0
+      utterance.volume = 1.0
 
-    // Pick best available voice: prefer Google/Microsoft natural voices
-    const voices = window.speechSynthesis.getVoices()
-    if (voices.length > 0) {
-      const targetLang = SPEECH_LANG[language] || 'en-US'
-      // Priority: Google > Microsoft > any matching language
-      const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith(targetLang.split('-')[0]))
-        || voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith(targetLang.split('-')[0]))
-        || voices.find(v => v.lang === targetLang)
-        || voices.find(v => v.lang.startsWith(targetLang.split('-')[0]))
-      if (preferred) utterance.voice = preferred
+      // Pick best available voice from cached list
+      const voices = voicesRef.current.length
+        ? voicesRef.current
+        : window.speechSynthesis.getVoices()
+
+      if (voices.length > 0) {
+        const langCode = (SPEECH_LANG[language] || 'en-US').split('-')[0]
+        const preferred =
+          voices.find(v => v.name === 'Google US English') ||
+          voices.find(v => v.name === 'Google UK English Female') ||
+          voices.find(v => v.name.includes('Google') && v.lang.startsWith(langCode)) ||
+          voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith(langCode) && v.name.includes('Natural')) ||
+          voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith(langCode)) ||
+          voices.find(v => v.lang.startsWith(langCode) && !v.name.toLowerCase().includes('espeak')) ||
+          voices[0]
+        if (preferred) utterance.voice = preferred
+      }
+
+      utterance.onstart = () => setSpeakingId(msgId)
+      utterance.onend   = () => setSpeakingId(null)
+      utterance.onerror = () => setSpeakingId(null)
+      window.speechSynthesis.speak(utterance)
     }
 
-    utterance.onstart  = () => setSpeakingId(msgId)
-    utterance.onend    = () => setSpeakingId(null)
-    utterance.onerror  = () => setSpeakingId(null)
-    window.speechSynthesis.speak(utterance)
+    // If voices not ready yet, wait for them then speak
+    if (voicesRef.current.length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        voicesRef.current = window.speechSynthesis.getVoices()
+        doSpeak()
+      }
+    } else {
+      doSpeak()
+    }
   }, [language])
 
   const stopSpeaking = useCallback(() => {
