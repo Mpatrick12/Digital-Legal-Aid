@@ -1,5 +1,11 @@
 import mongoose from 'mongoose'
 
+const articleSchema = new mongoose.Schema({
+  number: String,
+  title: String,
+  text: String
+}, { _id: false })
+
 const gazetteDocumentSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -10,13 +16,14 @@ const gazetteDocumentSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  gazetteNumber: String,      // short gazette number e.g. "21bis"
   publicationDate: {
     type: Date,
     required: true
   },
   category: {
     type: String,
-    enum: ['Law', 'Presidential Order', 'Ministerial Order', 'Prime Minister Order', 'Other'],
+    enum: ['Law', 'Presidential Order', 'Ministerial Order', 'Prime Minister Order', 'Special Edition', 'Other'],
     required: true
   },
   documentType: {
@@ -24,10 +31,24 @@ const gazetteDocumentSchema = new mongoose.Schema({
     enum: ['Official Gazette', 'Supplement', 'Special Edition'],
     default: 'Official Gazette'
   },
+  languages: {
+    type: [String],
+    default: ['en']
+  },
   extractedText: {
     en: String,
     rw: String,
     fr: String
+  },
+  textPreview: String,         // first 500 chars for quick display
+  articles: [articleSchema],   // parsed individual articles
+  articleCount: {
+    type: Number,
+    default: 0
+  },
+  isScannedPdf: {              // true if no extractable text
+    type: Boolean,
+    default: false
   },
   summary: {
     en: String,
@@ -47,6 +68,10 @@ const gazetteDocumentSchema = new mongoose.Schema({
     default: 0
   },
   searchCount: {
+    type: Number,
+    default: 0
+  },
+  viewCount: {
     type: Number,
     default: 0
   }

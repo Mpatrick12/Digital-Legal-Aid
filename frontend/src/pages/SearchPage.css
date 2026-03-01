@@ -284,8 +284,47 @@
   padding: 14px 18px;
   background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-700) 100%);
   color: #fff;
-  cursor: pointer;
   user-select: none;
+}
+
+/* ── Speak / TTS button ─────────────────────────────── */
+.speak-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.18);
+  color: #fff;
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+  flex-shrink: 0;
+}
+.speak-btn:hover { background: rgba(255,255,255,.32); transform: scale(1.1); }
+.speak-btn.speaking {
+  background: rgba(255,255,255,.35);
+  animation: pulse-speak 1.2s ease-in-out infinite;
+}
+@keyframes pulse-speak {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
+}
+
+/* Speak button inside result-header (dark bg not guaranteed) */
+.result-header .speak-btn {
+  background: var(--brand-100);
+  color: var(--brand-600);
+}
+.result-header .speak-btn:hover { background: var(--brand-200); }
+.result-header .speak-btn.speaking {
+  background: var(--brand-200);
+  animation: pulse-speak-blue 1.2s ease-in-out infinite;
+}
+@keyframes pulse-speak-blue {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,.35); }
+  50%       { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
 }
 
 .ai-answer-header-left {

@@ -1,106 +1,145 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Scale, BookOpen, Search, Download, Calendar, ChevronDown, Filter } from 'lucide-react'
+import {
+  Scale, BookOpen, Search, Download, Calendar, Filter,
+  SlidersHorizontal, X, ChevronDown
+} from 'lucide-react'
 import axios from 'axios'
 import './GazetteBrowse.css'
 
-function GazetteBrowse() {
-  const navigate = useNavigate()
-  const [documents, setDocuments] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
-  const [selectedYear, setSelectedYear] = useState('')
-  const [dbStats, setDbStats] = useState({ totalDocuments: 0, recentUploads: [] })
-  const [user, setUser] = useState(null)
+const CATEGORIES = ['All', 'Law', 'Presidential Order', 'Ministerial Order', 'Prime Minister Order', 'Special Edition', 'Other']
+const YEARS = Array.from({ length: 26 }, (_, i) => String(2024 - i))
+const SORT_OPTIONS = [
+  { value: 'newest',    label: 'Newest first' },
+  { value: 'relevance', label: 'Most relevant' },
+  { value: 'downloads', label: 'Most downloaded' }
+]
+const LANG_OPTIONS = [
+  { value: '', label: 'All languages' },
+  { value: 'en', label: 'English' },
+  { value: 'rw', label: 'Kinyarwanda' },
+  { value: 'fr', label: 'French' }
+]
 
-  const categories = ['Law', 'Presidential Order', 'Ministerial Order', 'Prime Minister Order', 'Other']
-  const years = ['2024', '2023', '2022', '2021', '2020', '2019', '2018']
+const CAT_COLORS = {
+  'Law': '#2563eb',
+  'Presidential Order': '#7c3aed',
+  'Ministerial Order': '#0891b2',
+  'Prime Minister Order': '#ea580c',
+  'Special Edition': '#be185d',
+  'Other': '#64748b'
+}
+
+// Highlight search term inside a snippet
+function Snippet({ text, term }) {
+  if (!text) return null
+  if (!term) return <span>{text}</span>
+  const parts = text.split(new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'))
+  return (
+    <span>
+      {parts.map((p, i) =>
+        p.toLowerCase() === term.toLowerCase()
+          ? <mark key={i} className="snippet-mark">{p}</mark>
+          : <span key={i}>{p}</span>
+      )}
+    </span>
+  )
+}
+
+export default function GazetteBrowse() {
+  const navigate = useNavigate()
+
+  const [query, setQuery] = useState('')
+  const [liveQuery, setLiveQuery] = useState('')
+  const [filters, setFilters] = useState({ category: '', year: '', language: '', sort: 'newest' })
+  const [documents, setDocuments] = useState([])
+  const [dbTotal, setDbTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('user') || '{}')
     setUser(userData)
     fetchDocuments()
-    fetchDbStats()
-  }, [selectedCategory, selectedYear])
+  }, [filters])
 
-  const fetchDbStats = async () => {
-    try {
-      const response = await axios.get('/api/debug/stats')
-      setDbStats(response.data)
-      console.log('Database stats:', response.data)
-    } catch (error) {
-      console.error('Stats fetch error:', error)
-    }
-  }
-
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async (q = query) => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (selectedCategory) params.append('category', selectedCategory)
-      if (selectedYear) params.append('year', selectedYear)
+      if (q) params.append('q', q)
+      if (filters.category && filters.category !== 'All') params.append('category', filters.category)
+      if (filters.year) params.append('year', filters.year)
+      if (filters.language) params.append('language', filters.language)
+      params.append('sort', filters.sort)
+      params.append('limit', '24')
 
-      const response = await axios.get(`/api/gazette?${params.toString()}`)
-      setDocuments(response.data.data || [])
-    } catch (error) {
-      console.error('Fetch error:', error)
+      const endpoint = q ? `/api/gazette/search?${params}` : `/api/gazette?${params}`
+      const res = await axios.get(endpoint)
+      const docs = res.data.data || res.data.results || []
+      setDocuments(docs)
+
+      // Get total count
+      const statsRes = await axios.get('/api/debug/stats').catch(() => ({ data: {} }))
+      setDbTotal(statsRes.data.totalDocuments || docs.length)
+    } catch {
       setDocuments([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, query])
 
-  const handleSearch = async (e) => {
+  const handleSearch = (e) => {
     e.preventDefault()
-    if (!searchQuery.trim()) return
-
-    setLoading(true)
-    try {
-      const response = await axios.get(`/api/gazette/search?q=${encodeURIComponent(searchQuery)}`)
-      setDocuments(response.data.data || [])
-    } catch (error) {
-      console.error('Search error:', error)
-    } finally {
-      setLoading(false)
-    }
+    setQuery(liveQuery)
+    fetchDocuments(liveQuery)
   }
 
-  const handleDownload = async (docId) => {
-    window.open(`/api/gazette/${docId}/download`, '_blank')
+  const clearSearch = () => {
+    setLiveQuery('')
+    setQuery('')
+    fetchDocuments('')
   }
+
+  const openChatWithQuery = () => {
+    window.dispatchEvent(new CustomEvent('openChat', { detail: { message: liveQuery || query } }))
+  }
+
+  const setFilter = (key, val) => setFilters(p => ({ ...p, [key]: val }))
+  const hasFilters = filters.category || filters.year || filters.language || filters.sort !== 'newest'
 
   return (
     <div className="gazette-browse">
+      {/* Nav */}
       <nav className="gazette-nav">
         <div className="nav-container">
           <Link to="/dashboard" className="nav-logo">
             <Scale size={24} color="#2563eb" />
             <div>
               <div className="logo-title">Rwanda Legal Aid</div>
-              <div className="logo-subtitle">Access to Justice</div>
+              <div className="logo-subtitle">Official Gazette Library</div>
             </div>
           </Link>
-
           <div className="nav-actions">
             {user?.role === 'admin' && (
               <Link to="/admin/upload-gazette" className="nav-btn upload-btn-nav">
-                Upload Document
+                + Upload Document
               </Link>
             )}
             <Link to="/dashboard" className="nav-btn">Dashboard</Link>
-            <button onClick={() => navigate(-1)} className="nav-btn">Back</button>
           </div>
         </div>
       </nav>
 
+      {/* Hero + Search */}
       <div className="gazette-header">
         <div className="container">
           <div className="header-content">
-            <BookOpen size={48} color="white" />
+            <div className="header-icon"><BookOpen size={36} /></div>
             <div>
-              <h1>Rwanda Official Gazette</h1>
-              <p>Search and access official legal documents and laws</p>
+              <h1>Rwanda Official Gazette Library</h1>
+              <p>Search across {dbTotal > 0 ? dbTotal : 'all'} official legal documents — laws, orders, and statutes</p>
             </div>
           </div>
 
@@ -108,76 +147,122 @@ function GazetteBrowse() {
             <Search size={20} color="#6b7280" />
             <input
               type="text"
-              placeholder="Search by document number, title, or keywords..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder='Search laws… e.g. "theft penalty" or "ubujura" or "Article 165"'
+              value={liveQuery}
+              onChange={(e) => setLiveQuery(e.target.value)}
             />
-            <button type="submit">Search</button>
+            {liveQuery && (
+              <button type="button" className="search-clear" onClick={clearSearch}>
+                <X size={16} />
+              </button>
+            )}
+            <button type="submit" className="search-submit">Search</button>
           </form>
 
-          <div className="filters">
-            <div className="filter-group">
-              <Filter size={18} />
-              <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
-                <option value="">All Categories</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <Calendar size={18} />
-              <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
-                <option value="">All Years</option>
-                {years.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
+          {/* Filter pills */}
+          <div className="filter-pills">
+            <button
+              className={`filter-pill-toggle${showFilters ? ' active' : ''}`}
+              onClick={() => setShowFilters(p => !p)}
+            >
+              <SlidersHorizontal size={14} /> Filters {hasFilters && <span className="filter-dot" />}
+              <ChevronDown size={13} style={{ transform: showFilters ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
+            </button>
+            {filters.category && filters.category !== 'All' && (
+              <span className="active-pill">{filters.category} <button onClick={() => setFilter('category', '')}>×</button></span>
+            )}
+            {filters.year && (
+              <span className="active-pill">{filters.year} <button onClick={() => setFilter('year', '')}>×</button></span>
+            )}
+            {filters.language && (
+              <span className="active-pill">{LANG_OPTIONS.find(l => l.value === filters.language)?.label} <button onClick={() => setFilter('language', '')}>×</button></span>
+            )}
           </div>
         </div>
       </div>
 
+      {/* Expanded filter bar */}
+      {showFilters && (
+        <div className="filter-bar">
+          <div className="container">
+            <div className="filter-bar-inner">
+              <div className="filter-group">
+                <label>Category</label>
+                <select value={filters.category} onChange={e => setFilter('category', e.target.value)}>
+                  {CATEGORIES.map(c => <option key={c} value={c === 'All' ? '' : c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="filter-group">
+                <label>Year</label>
+                <select value={filters.year} onChange={e => setFilter('year', e.target.value)}>
+                  <option value="">All years</option>
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div className="filter-group">
+                <label>Language</label>
+                <select value={filters.language} onChange={e => setFilter('language', e.target.value)}>
+                  {LANG_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                </select>
+              </div>
+              <div className="filter-group">
+                <label>Sort by</label>
+                <select value={filters.sort} onChange={e => setFilter('sort', e.target.value)}>
+                  {SORT_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
       <div className="gazette-content">
         <div className="container">
           <div className="content-header">
-            <h2>Official Gazette Documents</h2>
-            <div className="header-right">
-              <span className="doc-count">{dbStats.totalDocuments} total in database</span>
-              {documents.length > 0 && documents.length !== dbStats.totalDocuments && (
-                <span className="doc-count"> • {documents.length} shown</span>
-              )}
-            </div>
+            <h2>
+              {query
+                ? `Results for "${query}" (${documents.length})`
+                : `All Gazettes (${documents.length}${dbTotal > documents.length ? ` of ${dbTotal}` : ''})`
+              }
+            </h2>
           </div>
 
           {loading ? (
             <div className="loading-state">
-              <div className="spinner"></div>
-              <p>Loading documents...</p>
+              <div className="spinner" />
+              <p>Searching legal library…</p>
             </div>
           ) : documents.length > 0 ? (
             <div className="documents-grid">
               {documents.map((doc) => (
                 <div key={doc.id || doc._id} className="document-card">
                   <div className="doc-header">
-                    <div className="doc-icon">
-                      <BookOpen size={24} color="#7c3aed" />
-                    </div>
-                    <span className="doc-category">{doc.category}</span>
+                    <div className="doc-icon"><BookOpen size={20} color="#7c3aed" /></div>
+                    <span
+                      className="doc-category"
+                      style={{ background: CAT_COLORS[doc.category] + '1a', color: CAT_COLORS[doc.category] || '#475569' }}
+                    >
+                      {doc.category}
+                    </span>
                   </div>
 
                   <h3 className="doc-title">{doc.title}</h3>
+
                   <div className="doc-meta">
                     <span className="doc-number">{doc.documentNumber}</span>
                     <span className="doc-date">
-                      {new Date(doc.publicationDate).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                      <Calendar size={12} />
+                      {new Date(doc.publicationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </span>
                   </div>
+
+                  {/* Relevance snippet */}
+                  {doc.snippet && (
+                    <div className="doc-snippet">
+                      <Snippet text={doc.snippet} term={query} />
+                    </div>
+                  )}
 
                   {doc.tags && doc.tags.length > 0 && (
                     <div className="doc-tags">
@@ -187,29 +272,39 @@ function GazetteBrowse() {
                     </div>
                   )}
 
-                  <div className="doc-actions">
-                    <Link to={`/gazette/${doc.id || doc._id}`} className="btn-view">
-                      View Details
-                    </Link>
-                    <button onClick={() => handleDownload(doc.id || doc._id)} className="btn-download">
-                      <Download size={16} />
-                      Download PDF
-                    </button>
+                  <div className="doc-stats">
+                    {doc.articleCount > 0 && <span>📑 {doc.articleCount} articles</span>}
+                    {doc.downloadCount > 0 && <span>⬇ {doc.downloadCount} downloads</span>}
+                    {doc.languages?.length > 0 && <span>🌐 {doc.languages.join(' · ').toUpperCase()}</span>}
                   </div>
 
-                  {doc.pageCount && (
-                    <div className="doc-footer">
-                      <span>{doc.pageCount} pages</span>
-                    </div>
-                  )}
+                  <div className="doc-actions">
+                    <Link to={`/gazette/${doc.id || doc._id}`} className="btn-view">View Details</Link>
+                    <button
+                      onClick={() => window.open(`/api/gazette/${doc.id || doc._id}/download`, '_blank')}
+                      className="btn-download"
+                    >
+                      <Download size={15} /> PDF
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="empty-state">
-              <BookOpen size={64} color="#d1d5db" />
-              <h3>No documents found</h3>
-              <p>Try adjusting your search or filters</p>
+              <BookOpen size={56} color="#cbd5e1" />
+              <h3>No gazettes found{query ? ` for "${query}"` : ''}</h3>
+              <p>Try different keywords, or let the AI Legal Assistant help you instantly</p>
+              <div className="empty-actions">
+                <button className="btn-try-ai" onClick={openChatWithQuery}>
+                  🤖 Try AI Legal Assistant →
+                </button>
+                {query && (
+                  <button className="btn-clear-search" onClick={clearSearch}>
+                    Clear search
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -217,5 +312,3 @@ function GazetteBrowse() {
     </div>
   )
 }
-
-export default GazetteBrowse

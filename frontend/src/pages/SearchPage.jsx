@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Scale, ArrowLeft, FileText, ExternalLink, Bot, ChevronDown, ChevronUp } from 'lucide-react'
+import { Search, Scale, ArrowLeft, FileText, ExternalLink, Bot, ChevronDown, ChevronUp, Volume2, VolumeX } from 'lucide-react'
 import './SearchPage.css'
 
 function SearchPage() {
@@ -13,6 +13,42 @@ function SearchPage() {
   const [aiSources, setAiSources] = useState([])
   const [aiExpanded, setAiExpanded] = useState(true)
   const [searchError, setSearchError] = useState(null)
+  const [speakingId, setSpeakingId] = useState(null)
+  const audioRef = useRef(null)
+
+  const stopSpeaking = () => {
+    window.speechSynthesis?.cancel()
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+    setSpeakingId(null)
+  }
+
+  const speakText = async (text, id) => {
+    if (speakingId === id) { stopSpeaking(); return }
+    stopSpeaking()
+    setSpeakingId(id)
+    try {
+      const res = await fetch('/api/tts/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, language: 'en' })
+      })
+      const data = await res.json()
+      if (data.status === 'success' && data.data?.audio) {
+        const audio = new Audio(`data:audio/mpeg;base64,${data.data.audio}`)
+        audioRef.current = audio
+        audio.onended = () => setSpeakingId(null)
+        audio.play()
+      } else {
+        const utter = new SpeechSynthesisUtterance(text)
+        utter.onend = () => setSpeakingId(null)
+        window.speechSynthesis.speak(utter)
+      }
+    } catch {
+      setSpeakingId(null)
+    }
+  }
+
+  const stripMd = (t) => t.replace(/\*\*/g, '').replace(/^\s*>\s*/gm, '').trim()
 
   const runSearch = async (q) => {
     if (!q.trim()) return
@@ -111,15 +147,35 @@ function SearchPage() {
               {/* ── AI Legal Analysis card ─────────────────────────────── */}
               {(aiLoading || aiAnswer) && (
                 <div className="ai-answer-card">
-                  <div className="ai-answer-header" onClick={() => setAiExpanded(p => !p)}>
-                    <div className="ai-answer-header-left">
+                  <div className="ai-answer-header">
+                    <div className="ai-answer-header-left" onClick={() => setAiExpanded(p => !p)} style={{cursor:'pointer', flex:1}}>
                       <div className="ai-answer-icon"><Bot size={18} /></div>
                       <div>
                         <div className="ai-answer-title">AI Legal Analysis</div>
                         <div className="ai-answer-subtitle">Based on Rwanda Penal Code — not a substitute for legal counsel</div>
                       </div>
                     </div>
-                    {aiAnswer && (aiExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />)}
+                    <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                      {aiAnswer && (
+                        <button
+                          className={`speak-btn${speakingId === 'ai' ? ' speaking' : ''}`}
+                          onClick={() => {
+                            const lawTexts = aiSources.filter(s => s.lawText)
+                              .map(s => `${s.articleNumber}: ${stripMd(s.lawText)}`).join('. ')
+                            const full = stripMd(aiAnswer) + (lawTexts ? ' Referenced law text: ' + lawTexts : '')
+                            speakText(full, 'ai')
+                          }}
+                          title={speakingId === 'ai' ? 'Stop' : 'Listen'}
+                        >
+                          {speakingId === 'ai' ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                        </button>
+                      )}
+                      {aiAnswer && (
+                        <span onClick={() => setAiExpanded(p => !p)} style={{cursor:'pointer'}}>
+                          {aiExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {aiLoading && (
@@ -183,32 +239,6 @@ function SearchPage() {
                                       <p>{src.explanation}</p>
                                     </div>
                                   )}
-                                  {src.whereToReport && (
-                                    <div className="ai-source-section">
-                                      <span className="ai-source-section-label">Where to report</span>
-                                      <p>{src.whereToReport}</p>
-                                    </div>
-                                  )}
-                                  {src.reportingSteps?.length > 0 && (
-                                    <div className="ai-source-section">
-                                      <span className="ai-source-section-label">Reporting steps</span>
-                                      <ol className="ai-source-steps">
-                                        {src.reportingSteps.map((step, si) => (
-                                          <li key={si}>{step}</li>
-                                        ))}
-                                      </ol>
-                                    </div>
-                                  )}
-                                  {src.requiredEvidence?.length > 0 && (
-                                    <div className="ai-source-section">
-                                      <span className="ai-source-section-label">Required evidence</span>
-                                      <ul className="ai-source-steps">
-                                        {src.requiredEvidence.map((ev, ei) => (
-                                          <li key={ei}>{ev}</li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  )}
                                 </div>
                               </details>
                             ))}
@@ -237,11 +267,25 @@ function SearchPage() {
                     <h2>Found {results.length} results</h2>
                   </div>
                   <div className="results-list">
-                    {results.map((result, index) => (
+                    {results.map((result, index) => {
+                      const rid = 'result-' + index
+                      return (
                       <div key={index} className="result-card">
                         <div className="result-header">
                           <h3>{result.crimeType}</h3>
-                          <span className="article-number">{result.articleNumber}</span>
+                          <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                            <span className="article-number">{result.articleNumber}</span>
+                            <button
+                              className={`speak-btn${speakingId === rid ? ' speaking' : ''}`}
+                              onClick={() => speakText(
+                                [result.explanation, result.whereToReport && `Where to report: ${result.whereToReport}`].filter(Boolean).join('. '),
+                                rid
+                              )}
+                              title={speakingId === rid ? 'Stop' : 'Listen'}
+                            >
+                              {speakingId === rid ? <VolumeX size={15} /> : <Volume2 size={15} />}
+                            </button>
+                          </div>
                         </div>
                         <p className="result-explanation">{result.explanation}</p>
                         
@@ -279,7 +323,8 @@ function SearchPage() {
                           </span>
                         </div>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </>
               ) : !searchError ? (

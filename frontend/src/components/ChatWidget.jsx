@@ -58,6 +58,19 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
     window.speechSynthesis.onvoiceschanged = load
   }, [])
 
+  // ── External openChat event (from GazetteDetail / GazetteBrowse) ─────────
+  useEffect(() => {
+    const handler = (e) => {
+      setIsOpen(true)
+      if (e.detail?.message) {
+        setInput(e.detail.message)
+        setTimeout(() => inputRef.current?.focus(), 120)
+      }
+    }
+    window.addEventListener('openChat', handler)
+    return () => window.removeEventListener('openChat', handler)
+  }, [])
+
   // ── Voice Output ────────────────────────────────────────────────────────────
   const speakText = useCallback(async (text, msgId) => {
     // Stop anything currently playing
