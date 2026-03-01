@@ -47,32 +47,102 @@ function detectLanguage(text, fallback = 'en') {
 
 // ─── Translation layer ────────────────────────────────────────────────────────
 
-const TRANSLATE_MODEL = 'llama-3.1-8b-instant' // fast + sufficient for translation
+const TRANSLATE_MODEL_RW = 'qwen/qwen3-32b'        // Qwen3 32B — best multilingual model on Groq, separate quota from llama
+const TRANSLATE_MODEL_EN = 'qwen/qwen3-32b'        // Same — Qwen3 understands Kinyarwanda far better than 8B
+
+// Terms that must never be translated — extracted before translation, restored after
+const PROTECTED_TERMS = [
+  { pattern: /Article\s+\d+/gi, key: 'ARTICLE' },
+  { pattern: /Rwanda National Police/gi, key: 'RNP' },
+  { pattern: /Isange One Stop Centre/gi, key: 'ISANGE' },
+  { pattern: /Rwanda Penal Code/gi, key: 'RPC' },
+  { pattern: /\b112\b/g, key: 'EMERGENCY' },
+]
+
+function protectTerms(text) {
+  const map = {}
+  let protected_ = text
+  PROTECTED_TERMS.forEach(({ pattern, key }) => {
+    let i = 0
+    protected_ = protected_.replace(pattern, (match) => {
+      const placeholder = `__${key}${i++}__`
+      map[placeholder] = match
+      return placeholder
+    })
+  })
+  return { protected_, map }
+}
+
+function restoreTerms(text, map) {
+  let restored = text
+  for (const [placeholder, original] of Object.entries(map)) {
+    restored = restored.replaceAll(placeholder, original)
+  }
+  return restored
+}
 
 /**
  * Translate text to a target language using Groq.
+ * Protects article numbers and proper nouns from being altered.
  * Falls back to original text on any error so the app never breaks.
  */
 async function translateWithGroq(text, targetLang) {
   if (!text || !text.trim()) return text
-  const langName = targetLang === 'rw' ? 'Kinyarwanda' : 'English'
+
+  // Protect terms that must not be translated
+  const { protected_, map } = protectTerms(text)
+
+  const model = targetLang === 'rw' ? TRANSLATE_MODEL_RW : TRANSLATE_MODEL_EN
+
+  const systemMsg = targetLang === 'rw'
+    ? `You are a professional translator specialising in Kinyarwanda (Ikinyarwanda) — the official language of Rwanda.
+Translate the following text into natural, fluent Kinyarwanda.
+CRITICAL: Kinyarwanda is NOT Kiswahili. Do NOT output Kiswahili words. Do NOT mix languages.
+CRITICAL: Do NOT translate placeholder tokens like __ARTICLE0__, __RNP0__, __EMERGENCY0__ — copy them exactly as they appear.
+Output ONLY the translated Kinyarwanda text. No explanations, no notes.`
+    : `You are a professional translator. Translate the following text into English.
+Do NOT translate placeholder tokens like __ARTICLE0__ — copy them exactly as they appear.
+Output ONLY the translated text. No explanations, no notes.`
+
+  // Retry once on rate-limit (429) with 5s delay
+  const attempt = async () => getGroqClient().chat.completions.create({
+    model,
+    messages: [
+      { role: 'system', content: systemMsg },
+      { role: 'user', content: protected_ }
+    ],
+    temperature: 0.1,
+    max_tokens: 1024
+  })
+
   try {
-    const result = await getGroqClient().chat.completions.create({
-      model: TRANSLATE_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: `You are a professional translator. Translate the following text into ${langName}. Output ONLY the translated text — no explanations, no notes, no original text.`
-        },
-        { role: 'user', content: text }
-      ],
-      temperature: 0.1,
-      max_tokens: 1024
-    })
-    return result.choices[0]?.message?.content?.trim() || text
+    let result
+    try {
+      result = await attempt()
+    } catch (err) {
+      if (err?.status === 429) {
+        logger.warn('Translation rate-limited — retrying in 5s', { targetLang, model })
+        await new Promise(r => setTimeout(r, 5000))
+        result = await attempt()
+      } else throw err
+    }
+
+    const raw = result.choices[0]?.message?.content?.trim() || text
+    // Strip Qwen3 <think>...</think> reasoning tokens if present
+    const translated = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim() || text
+
+    const restored = restoreTerms(translated, map)
+
+    // Safety: if RW output still contains Kiswahili, return English original
+    if (targetLang === 'rw' && containsKiswahili(restored)) {
+      logger.warn('Translation to RW still contains Kiswahili — returning English original')
+      return text
+    }
+
+    return restored
   } catch (err) {
-    logger.warn('Translation failed — using original text', { targetLang, error: err.message })
-    return text // graceful fallback
+    logger.warn('Translation failed — using original text', { targetLang, model, error: err.message })
+    return text
   }
 }
 
@@ -240,7 +310,8 @@ function deduplicateResponse(text) {
  * @param {Array}  conversationHistory - Previous messages [{role, content}]
  * @returns {string}                  - AI-generated response text
  */
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+const GROQ_MODEL         = 'llama-3.3-70b-versatile'                    // primary — best quality
+const GROQ_MODEL_FALLBACK = 'meta-llama/llama-4-scout-17b-16e-instruct'  // fallback when 70B is rate-limited
 
 export async function generateLegalResponse(
   userQuery,
@@ -332,13 +403,29 @@ Remember: You are talking to a real person who needs real help right now. Be hum
     historyLength: conversationHistory.length
   })
 
-  const callGroq = (msgs) => getGroqClient().chat.completions.create({
-    model: GROQ_MODEL,
-    messages: msgs,
-    temperature: 0.1,   // Very low — deterministic, follows instructions strictly
-    max_tokens: 512,    // Enforce brevity
-    top_p: 0.85
-  })
+  const callGroq = async (msgs, model = GROQ_MODEL) => {
+    try {
+      return await getGroqClient().chat.completions.create({
+        model,
+        messages: msgs,
+        temperature: 0.1,
+        max_tokens: 512,
+        top_p: 0.85
+      })
+    } catch (err) {
+      if (err?.status === 429 && model === GROQ_MODEL) {
+        logger.warn(`${GROQ_MODEL} rate-limited — falling back to ${GROQ_MODEL_FALLBACK}`)
+        return getGroqClient().chat.completions.create({
+          model: GROQ_MODEL_FALLBACK,
+          messages: msgs,
+          temperature: 0.1,
+          max_tokens: 512,
+          top_p: 0.85
+        })
+      }
+      throw err
+    }
+  }
 
   let completion = await callGroq(messages)
   let rawResponse = completion.choices[0]?.message?.content || ''
