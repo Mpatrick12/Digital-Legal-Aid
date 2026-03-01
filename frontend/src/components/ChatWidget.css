@@ -480,6 +480,10 @@
   border-top: 1px solid #f1f5f9;
 }
 
+.chat-footer__voice-note {
+  color: #cbd5e1;
+}
+
 /* ── Voice: Auto-speak toggle (header) ────────────────────────────────────── */
 
 .chat-autospeak-btn {

@@ -47,9 +47,10 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const recognitionRef = useRef(null)
-  const voicesRef = useRef([])           // cached voice list
+  const voicesRef = useRef([])           // cached voice list (browser TTS fallback)
+  const audioRef = useRef(null)          // current ElevenLabs <Audio> element
 
-  // Load and cache voices — they load async on first page visit
+  // Load and cache browser voices (used as fallback for Kinyarwanda)
   useEffect(() => {
     if (!window.speechSynthesis) return
     const load = () => { voicesRef.current = window.speechSynthesis.getVoices() }
@@ -58,9 +59,39 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
   }, [])
 
   // ── Voice Output ────────────────────────────────────────────────────────────
-  const speakText = useCallback((text, msgId) => {
-    if (!window.speechSynthesis) return
-    window.speechSynthesis.cancel()
+  const speakText = useCallback(async (text, msgId) => {
+    // Stop anything currently playing
+    window.speechSynthesis?.cancel()
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+    setSpeakingId(msgId)
+
+    if (language === 'en') {
+      // ElevenLabs — call backend proxy to keep API key server-side
+      try {
+        const token = localStorage.getItem('token')
+        const headers = { 'Content-Type': 'application/json' }
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL || ''}/api/tts/speak`,
+          { method: 'POST', headers, body: JSON.stringify({ text, language: 'en' }) }
+        )
+        const json = await res.json()
+        if (json.data?.audio) {
+          const audio = new Audio(`data:audio/mpeg;base64,${json.data.audio}`)
+          audioRef.current = audio
+          audio.onended = () => { setSpeakingId(null); audioRef.current = null }
+          audio.onerror = () => { setSpeakingId(null); audioRef.current = null }
+          audio.play()
+          return
+        }
+      } catch {
+        // ElevenLabs failed — fall through to browser TTS
+      }
+    }
+
+    // Kinyarwanda (or ElevenLabs fallback) — browser Web Speech API
+    if (!window.speechSynthesis) { setSpeakingId(null); return }
 
     const doSpeak = () => {
       const utterance = new SpeechSynthesisUtterance(text)
@@ -68,32 +99,22 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
       utterance.rate   = 1.0
       utterance.pitch  = 1.0
       utterance.volume = 1.0
-
-      // Pick best available voice from cached list
-      const voices = voicesRef.current.length
-        ? voicesRef.current
-        : window.speechSynthesis.getVoices()
-
+      const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices()
       if (voices.length > 0) {
         const langCode = (SPEECH_LANG[language] || 'en-US').split('-')[0]
         const preferred =
           voices.find(v => v.name === 'Google US English') ||
-          voices.find(v => v.name === 'Google UK English Female') ||
           voices.find(v => v.name.includes('Google') && v.lang.startsWith(langCode)) ||
-          voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith(langCode) && v.name.includes('Natural')) ||
           voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith(langCode)) ||
-          voices.find(v => v.lang.startsWith(langCode) && !v.name.toLowerCase().includes('espeak')) ||
+          voices.find(v => v.lang.startsWith(langCode)) ||
           voices[0]
         if (preferred) utterance.voice = preferred
       }
-
-      utterance.onstart = () => setSpeakingId(msgId)
       utterance.onend   = () => setSpeakingId(null)
       utterance.onerror = () => setSpeakingId(null)
       window.speechSynthesis.speak(utterance)
     }
 
-    // If voices not ready yet, wait for them then speak
     if (voicesRef.current.length === 0) {
       window.speechSynthesis.onvoiceschanged = () => {
         voicesRef.current = window.speechSynthesis.getVoices()
@@ -106,6 +127,7 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
 
   const stopSpeaking = useCallback(() => {
     window.speechSynthesis?.cancel()
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     setSpeakingId(null)
   }, [])
 
@@ -472,6 +494,9 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
             {language === 'en'
               ? 'Responses based on Rwanda Penal Code. Not legal advice.'
               : 'Ibisubizo bishingiye ku Mategeko y\'u Rwanda. Si inama y\'ubutegetsi.'}
+            {language === 'rw' && (
+              <span className="chat-footer__voice-note"> · 🔊 Voice available in English only</span>
+            )}
           </div>
         </div>
       )}
