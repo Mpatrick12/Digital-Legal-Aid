@@ -12,26 +12,40 @@ function SearchPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiSources, setAiSources] = useState([])
   const [aiExpanded, setAiExpanded] = useState(true)
+  const [searchError, setSearchError] = useState(null)
 
   const runSearch = async (q) => {
     if (!q.trim()) return
     setLoading(true)
     setAiLoading(true)
     setSearched(true)
+    setSearchError(null)
     setAiAnswer(null)
     setAiSources([])
 
+    const fetchJson = async (url, opts) => {
+      const r = await fetch(url, opts)
+      if (!r.ok) throw new Error(`Server error ${r.status}`)
+      return r.json()
+    }
+
     // Run both in parallel
     const [searchRes, aiRes] = await Promise.allSettled([
-      fetch(`/api/search?q=${encodeURIComponent(q)}&lang=en`).then(r => r.json()),
-      fetch('/api/chat/message', {
+      fetchJson(`/api/search?q=${encodeURIComponent(q)}&lang=en`),
+      fetchJson('/api/chat/message', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...( localStorage.getItem('token') ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {}) },
+        headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('token') ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {}) },
         body: JSON.stringify({ message: q, language: 'en', conversationHistory: [] })
-      }).then(r => r.json())
+      })
     ])
 
-    if (searchRes.status === 'fulfilled') setResults(searchRes.value.results || [])
+    if (searchRes.status === 'fulfilled') {
+      setResults(searchRes.value.results || [])
+    } else {
+      setSearchError('Could not reach the server. Please make sure the backend is running on port 5001.')
+      setResults([])
+    }
+
     if (aiRes.status === 'fulfilled' && aiRes.value?.data) {
       setAiAnswer(aiRes.value.data.response)
       setAiSources(aiRes.value.data.sources || [])
@@ -147,7 +161,40 @@ function SearchPage() {
                                   <span className="ai-source-ref">{src.articleNumber}</span>
                                   <span className="ai-source-type">{src.crimeType}</span>
                                 </summary>
-                                {src.lawText && <blockquote className="ai-source-law">{src.lawText}</blockquote>}
+                                <div className="ai-source-body">
+                                  {src.explanation && (
+                                    <div className="ai-source-section">
+                                      <span className="ai-source-section-label">About this article</span>
+                                      <p>{src.explanation}</p>
+                                    </div>
+                                  )}
+                                  {src.whereToReport && (
+                                    <div className="ai-source-section">
+                                      <span className="ai-source-section-label">Where to report</span>
+                                      <p>{src.whereToReport}</p>
+                                    </div>
+                                  )}
+                                  {src.reportingSteps?.length > 0 && (
+                                    <div className="ai-source-section">
+                                      <span className="ai-source-section-label">Reporting steps</span>
+                                      <ol className="ai-source-steps">
+                                        {src.reportingSteps.map((step, si) => (
+                                          <li key={si}>{step}</li>
+                                        ))}
+                                      </ol>
+                                    </div>
+                                  )}
+                                  {src.requiredEvidence?.length > 0 && (
+                                    <div className="ai-source-section">
+                                      <span className="ai-source-section-label">Required evidence</span>
+                                      <ul className="ai-source-steps">
+                                        {src.requiredEvidence.map((ev, ei) => (
+                                          <li key={ei}>{ev}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
                               </details>
                             ))}
                           </div>
@@ -158,9 +205,18 @@ function SearchPage() {
                 </div>
               )}
               {/* ────────────────────────────────────────────────────────── */}
+              {searchError && (
+                <div className="search-error-banner">
+                  <span>⚠️</span>
+                  <div>
+                    <strong>Search unavailable</strong>
+                    <p>{searchError}</p>
+                  </div>
+                </div>
+              )}
               {loading ? (
                 <div className="loading">Searching legal database...</div>
-              ) : results.length > 0 ? (
+              ) : !searchError && results.length > 0 ? (
                 <>
                   <div className="results-header">
                     <h2>Found {results.length} results</h2>
@@ -211,13 +267,13 @@ function SearchPage() {
                     ))}
                   </div>
                 </>
-              ) : (
+              ) : !searchError ? (
                 <div className="no-results">
                   <FileText size={48} color="#9ca3af" />
                   <h3>No results found</h3>
                   <p>Try different keywords or browse our legal categories</p>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>

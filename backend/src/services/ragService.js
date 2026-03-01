@@ -518,8 +518,12 @@ export async function ragPipeline(userQuery, language = 'en', history = []) {
   const sources = articles.map(a => ({
     articleNumber: a.articleNumber,
     crimeType: a.crimeType,
-    summary: a.simplifiedExplanation?.en || '',
-    lawText: a.originalText?.en || ''
+    summary: a.simplifiedExplanation?.en || a.originalText?.en || '',
+    lawText: a.originalText?.en || '',
+    explanation: a.simplifiedExplanation?.en || a.originalText?.en || '',
+    whereToReport: a.whereToReport?.en || '',
+    reportingSteps: (a.reportingSteps || []).map(s => s.description?.en || s).filter(Boolean),
+    requiredEvidence: (a.requiredEvidence || []).map(e => e.en || e).filter(Boolean)
   }))
 
   return { response: finalResponse, sources }
