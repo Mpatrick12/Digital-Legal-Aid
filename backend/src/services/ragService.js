@@ -7,6 +7,7 @@
  */
 
 import Groq from 'groq-sdk'
+import { Translate } from '@google-cloud/translate/build/src/v2/index.js'
 import LegalContent from '../models/LegalContent.js'
 import logger from '../config/logger.js'
 
@@ -47,8 +48,17 @@ function detectLanguage(text, fallback = 'en') {
 
 // ─── Translation layer ────────────────────────────────────────────────────────
 
-const TRANSLATE_MODEL_RW = 'qwen/qwen3-32b'        // Qwen3 32B — best multilingual model on Groq, separate quota from llama
-const TRANSLATE_MODEL_EN = 'qwen/qwen3-32b'        // Same — Qwen3 understands Kinyarwanda far better than 8B
+// ─── Google Cloud Translation client (lazy) ─────────────────────────────────
+let _googleTranslate = null
+function getGoogleTranslate() {
+  if (!_googleTranslate) {
+    if (!process.env.GOOGLE_TRANSLATE_API_KEY) {
+      throw new Error('GOOGLE_TRANSLATE_API_KEY is not set in environment variables')
+    }
+    _googleTranslate = new Translate({ key: process.env.GOOGLE_TRANSLATE_API_KEY })
+  }
+  return _googleTranslate
+}
 
 // Terms that must never be translated — extracted before translation, restored after
 const PROTECTED_TERMS = [
@@ -65,83 +75,52 @@ function protectTerms(text) {
   PROTECTED_TERMS.forEach(({ pattern, key }) => {
     let i = 0
     protected_ = protected_.replace(pattern, (match) => {
-      const placeholder = `__${key}${i++}__`
-      map[placeholder] = match
-      return placeholder
+      // Use HTML span with notranslate — Google Cloud Translation never touches these
+      const id = `${key}${i++}`
+      map[id] = match
+      return `<span class="notranslate" id="${id}">${match}</span>`
     })
   })
   return { protected_, map }
 }
 
 function restoreTerms(text, map) {
-  let restored = text
-  for (const [placeholder, original] of Object.entries(map)) {
-    restored = restored.replaceAll(placeholder, original)
-  }
+  // Strip the span wrapper but keep the inner content,
+  // then replace any leftover id refs just in case
+  let restored = text.replace(/<span[^>]*id="([^"]+)"[^>]*>(.*?)<\/span>/gi, (_, id, inner) => {
+    return map[id] || inner
+  })
   return restored
 }
 
 /**
- * Translate text to a target language using Groq.
+ * Translate text using Google Cloud Translation API.
  * Protects article numbers and proper nouns from being altered.
  * Falls back to original text on any error so the app never breaks.
  */
-async function translateWithGroq(text, targetLang) {
+async function translateWithGoogle(text, targetLang) {
   if (!text || !text.trim()) return text
 
-  // Protect terms that must not be translated
+  // Protect terms that must not be mangled by translation
   const { protected_, map } = protectTerms(text)
 
-  const model = targetLang === 'rw' ? TRANSLATE_MODEL_RW : TRANSLATE_MODEL_EN
-
-  const systemMsg = targetLang === 'rw'
-    ? `You are a professional translator specialising in Kinyarwanda (Ikinyarwanda) — the official language of Rwanda.
-Translate the following text into natural, fluent Kinyarwanda.
-CRITICAL: Kinyarwanda is NOT Kiswahili. Do NOT output Kiswahili words. Do NOT mix languages.
-CRITICAL: Do NOT translate placeholder tokens like __ARTICLE0__, __RNP0__, __EMERGENCY0__ — copy them exactly as they appear.
-Output ONLY the translated Kinyarwanda text. No explanations, no notes.`
-    : `You are a professional translator. Translate the following text into English.
-Do NOT translate placeholder tokens like __ARTICLE0__ — copy them exactly as they appear.
-Output ONLY the translated text. No explanations, no notes.`
-
-  // Retry once on rate-limit (429) with 5s delay
-  const attempt = async () => getGroqClient().chat.completions.create({
-    model,
-    messages: [
-      { role: 'system', content: systemMsg },
-      { role: 'user', content: protected_ }
-    ],
-    temperature: 0.1,
-    max_tokens: 1024
-  })
-
   try {
-    let result
-    try {
-      result = await attempt()
-    } catch (err) {
-      if (err?.status === 429) {
-        logger.warn('Translation rate-limited — retrying in 5s', { targetLang, model })
-        await new Promise(r => setTimeout(r, 5000))
-        result = await attempt()
-      } else throw err
-    }
-
-    const raw = result.choices[0]?.message?.content?.trim() || text
-    // Strip Qwen3 <think>...</think> reasoning tokens if present
-    const translated = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim() || text
-
+    const [translated] = await getGoogleTranslate().translate(protected_, {
+      to: targetLang,
+      format: 'html'   // tells Google to leave HTML tags (including our notranslate spans) intact
+    })
     const restored = restoreTerms(translated, map)
-
-    // Safety: if RW output still contains Kiswahili, return English original
-    if (targetLang === 'rw' && containsKiswahili(restored)) {
-      logger.warn('Translation to RW still contains Kiswahili — returning English original')
-      return text
-    }
-
-    return restored
+    // Decode HTML entities that Google introduces when using format:'html'
+    const decoded = restored
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+    logger.info('Google translation succeeded', { targetLang, chars: text.length })
+    return decoded
   } catch (err) {
-    logger.warn('Translation failed — using original text', { targetLang, model, error: err.message })
+    logger.warn('Google translation failed — using original text', { targetLang, error: err.message })
     return text
   }
 }
@@ -521,7 +500,7 @@ export async function ragPipeline(userQuery, language = 'en', history = []) {
   let queryForAI = userQuery
   if (detectedLang === 'rw') {
     logger.info('Kinyarwanda query detected — translating to English for RAG')
-    queryForAI = await translateWithGroq(userQuery, 'en')
+    queryForAI = await translateWithGoogle(userQuery, 'en')
     logger.info('Translated query', { original: userQuery, translated: queryForAI })
   }
 
@@ -532,7 +511,7 @@ export async function ragPipeline(userQuery, language = 'en', history = []) {
   let finalResponse = englishResponse
   if (detectedLang === 'rw') {
     logger.info('Translating English response to Kinyarwanda')
-    finalResponse = await translateWithGroq(englishResponse, 'rw')
+    finalResponse = await translateWithGoogle(englishResponse, 'rw')
   }
 
   // Return cleaned source list for citation display in the UI

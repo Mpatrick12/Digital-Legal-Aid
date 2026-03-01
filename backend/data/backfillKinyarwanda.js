@@ -27,8 +27,8 @@ import LegalContent from '../src/models/LegalContent.js'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const CHECKPOINT_FILE = resolve(__dirname, 'backfill-checkpoint.json')
 
-const GROQ_MODEL   = 'llama-3.3-70b-versatile'
-const DELAY_MS     = 2200   // ~27 req/min — safely under the 30/min limit
+const GROQ_MODEL   = 'llama-3.1-8b-instant'  // Higher daily quota than 70B
+const DELAY_MS     = 2500   // ~24 req/min — 8b model allows much higher throughput
 const BATCH_DB     = 20     // save to DB every N articles
 
 // ─── Static Kinyarwanda for the generic reporting steps ───────────────────────
@@ -179,7 +179,7 @@ async function backfill() {
   )
 
   console.log(`\n⚙️   Step 2: Generating simplifiedExplanation.rw via Groq for ${needsRw.length} articles...`)
-  console.log(`    (Rate limited to ~27 req/min — estimated time: ${Math.ceil(needsRw.length * DELAY_MS / 60000)} min)\n`)
+  console.log(`    (Rate limited to ~15 req/min — estimated time: ${Math.ceil(needsRw.length * DELAY_MS / 60000)} min)\n`)
 
   if (needsRw.length === 0) {
     console.log('   ✅  All articles already have Kinyarwanda simplified explanations.')
@@ -193,7 +193,7 @@ async function backfill() {
     const doc   = needsRw[i]
     const docId = doc._id.toString()
 
-    process.stdout.write(`\r   [${i + 1}/${needsRw.length}] ${doc.articleNumber.padEnd(15)} `)
+process.stdout.write(`   [${i + 1}/${needsRw.length}] ${doc.articleNumber.padEnd(15)} — done\n`)
 
     try {
       const rwText = await generateSimplifiedRw(doc)
@@ -222,11 +222,12 @@ async function backfill() {
 
     } catch (err) {
       failed++
-      process.stdout.write(`❌ ${err.message?.substring(0, 40)}`)
-      // On rate limit error, wait longer
+      process.stdout.write(`❌ ${err.message?.substring(0, 80)}`)
+      // Exponential backoff on rate limit
       if (err.status === 429) {
-        console.log('\n   ⏳  Rate limited — waiting 65 seconds...')
-        await new Promise(r => setTimeout(r, 65000))
+        const wait = Math.min(90000 + (failed * 15000), 180000)
+        console.log(`\n   ⏳  Rate limited — waiting ${wait/1000}s...`)
+        await new Promise(r => setTimeout(r, wait))
       }
     }
   }
