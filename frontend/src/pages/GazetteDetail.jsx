@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
-import { API_BASE } from '../config'
+import { API_BASE_URL } from '../config'
 import './GazetteDetail.css'
 
 const LANG_LABEL = { rw: 'Kinyarwanda', en: 'English', fr: 'Français' }
@@ -24,7 +24,7 @@ export default function GazetteDetail() {
   /* ── Fetch document ── */
   useEffect(() => {
     setLoading(true)
-    axios.get(`${API_BASE}/api/gazette/${id}`)
+    axios.get(`${API_BASE_URL}/api/gazette/${id}`)
       .then(r => {
         setDoc(r.data)
         const langs = r.data.languages || ['en']
@@ -126,7 +126,7 @@ export default function GazetteDetail() {
           <span className="topbar-cat">{doc.category}</span>
           {doc.gazetteNumber && <span className="topbar-gaz">Gazette {doc.gazetteNumber}</span>}
         </div>
-        <a className="download-btn" href={`${API_BASE}/api/gazette/${id}/download`} target="_blank" rel="noreferrer">
+        <a className="download-btn" href={`${API_BASE_URL}/api/gazette/${id}/download`} target="_blank" rel="noreferrer">
           ↓ Download PDF
         </a>
       </div>
