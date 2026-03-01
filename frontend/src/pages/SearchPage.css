@@ -435,6 +435,15 @@
   line-height: 1.55;
   margin: 0;
 }
+.ai-source-lawtext {
+  font-size: 13px;
+  color: var(--gray-800);
+  line-height: 1.7;
+  margin: 0;
+  font-style: italic;
+  border-left: 3px solid var(--primary);
+  padding-left: 10px;
+}
 .ai-source-steps {
   margin: 0;
   padding-left: 18px;

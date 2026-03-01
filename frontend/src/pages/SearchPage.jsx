@@ -162,7 +162,22 @@ function SearchPage() {
                                   <span className="ai-source-type">{src.crimeType}</span>
                                 </summary>
                                 <div className="ai-source-body">
-                                  {src.explanation && (
+                                  {src.lawText && (
+                                    <div className="ai-source-section">
+                                      <span className="ai-source-section-label">Law text (Rwanda Penal Code)</span>
+                                      <p className="ai-source-lawtext">{(() => {
+                                        const lt = src.lawText
+                                        // Strip garbled OCR title prefix up to the first body sentence
+                                        const cleaned = lt.replace(
+                                          /^Article\s+\d+\s*:.*?(?=The |Any |Upon |If |A person|No person|Whoever|When |In this|For the|Section|Definitions|It is|Pursuant|Anyone|Every person|No one)/s,
+                                          ''
+                                        ).trim()
+                                        return cleaned || lt
+                                      })()}</p>
+                                    </div>
+                                  )}
+                                  {src.explanation && src.explanation !== src.lawText &&
+                                   src.explanation.length > 40 && (
                                     <div className="ai-source-section">
                                       <span className="ai-source-section-label">About this article</span>
                                       <p>{src.explanation}</p>
