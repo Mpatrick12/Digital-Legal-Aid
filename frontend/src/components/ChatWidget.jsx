@@ -48,15 +48,37 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
   const inputRef = useRef(null)
   const recognitionRef = useRef(null)   // holds SpeechRecognition instance
 
+  // Pre-load voices so they're available immediately on first speak
+  useEffect(() => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.getVoices()
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices()
+    }
+  }, [])
+
   // ── Voice Output ────────────────────────────────────────────────────────────
   const speakText = useCallback((text, msgId) => {
     if (!window.speechSynthesis) return
-    // Cancel any currently playing speech first
     window.speechSynthesis.cancel()
+
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = SPEECH_LANG[language] || 'en-US'
-    utterance.rate = 0.9
-    utterance.pitch = 1
+    utterance.rate = 1.05    // Natural conversational pace
+    utterance.pitch = 1.1    // Slightly higher = less flat
+    utterance.volume = 1     // Full volume
+
+    // Pick best available voice: prefer Google/Microsoft natural voices
+    const voices = window.speechSynthesis.getVoices()
+    if (voices.length > 0) {
+      const targetLang = SPEECH_LANG[language] || 'en-US'
+      // Priority: Google > Microsoft > any matching language
+      const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith(targetLang.split('-')[0]))
+        || voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith(targetLang.split('-')[0]))
+        || voices.find(v => v.lang === targetLang)
+        || voices.find(v => v.lang.startsWith(targetLang.split('-')[0]))
+      if (preferred) utterance.voice = preferred
+    }
+
     utterance.onstart  = () => setSpeakingId(msgId)
     utterance.onend    = () => setSpeakingId(null)
     utterance.onerror  = () => setSpeakingId(null)
