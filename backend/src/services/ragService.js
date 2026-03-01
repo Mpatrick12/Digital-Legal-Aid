@@ -45,6 +45,37 @@ function detectLanguage(text, fallback = 'en') {
   return rwCount >= 2 ? 'rw' : fallback
 }
 
+// ─── Translation layer ────────────────────────────────────────────────────────
+
+const TRANSLATE_MODEL = 'llama-3.1-8b-instant' // fast + sufficient for translation
+
+/**
+ * Translate text to a target language using Groq.
+ * Falls back to original text on any error so the app never breaks.
+ */
+async function translateWithGroq(text, targetLang) {
+  if (!text || !text.trim()) return text
+  const langName = targetLang === 'rw' ? 'Kinyarwanda' : 'English'
+  try {
+    const result = await getGroqClient().chat.completions.create({
+      model: TRANSLATE_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a professional translator. Translate the following text into ${langName}. Output ONLY the translated text — no explanations, no notes, no original text.`
+        },
+        { role: 'user', content: text }
+      ],
+      temperature: 0.1,
+      max_tokens: 1024
+    })
+    return result.choices[0]?.message?.content?.trim() || text
+  } catch (err) {
+    logger.warn('Translation failed — using original text', { targetLang, error: err.message })
+    return text // graceful fallback
+  }
+}
+
 // Common Kiswahili markers — if these appear heavily in AI output it's wrong
 const SWAHILI_MARKERS = [
   'ninaweza','tafadhali','kwa nini','unarudishwa','ndabona','ndiwe','tuelewe',
@@ -177,7 +208,7 @@ function cleanRepetitiveLines(text, maxPhraseRepeat = 2) {
  * Sentences are split on . ! ?
  */
 function deduplicateResponse(text) {
-  const VISIT_MSG = 'Baza polisi yo hafi yawe kugirango ubone amakuru arambuye.'
+  const VISIT_MSG = 'Please visit your nearest police station or call Rwanda National Police: 112.'
   const sentences = text.split(/(?<=[.!?])\s+/)
   const seen = {}
   const result = []
@@ -217,39 +248,30 @@ export async function generateLegalResponse(
   language = 'en',
   conversationHistory = []
 ) {
-  // Auto-detect actual language from the user's text — overrides UI toggle
-  const detectedLang = detectLanguage(userQuery, language)
-  // Build the context block from retrieved articles
-  // — use detectedLang for article text so context matches response language
-  // — each article text is capped at 500 chars and repetitive lines are stripped
+  // This function always generates in English.
+  // The ragPipeline() caller handles translation to/from Kinyarwanda.
   const contextBlock = retrievedArticles.length > 0
     ? retrievedArticles.map((article, i) => {
-        const rawLawText = article.originalText?.[detectedLang]
-          || article.originalText?.en
-          || ''
+        const rawLawText = article.originalText?.en || ''
         // Truncate to 500 chars then clean repeated phrases
         const lawText = cleanRepetitiveLines(
           rawLawText.length > 500 ? rawLawText.slice(0, 500) + '…' : rawLawText
         )
 
-        const rawExplanation = article.simplifiedExplanation?.[detectedLang]
-          || article.simplifiedExplanation?.en
-          || ''
+        const rawExplanation = article.simplifiedExplanation?.en || ''
         const explanation = cleanRepetitiveLines(
           rawExplanation.length > 500 ? rawExplanation.slice(0, 500) + '…' : rawExplanation
         )
 
         const steps = (article.reportingSteps || [])
-          .map(s => `  ${s.stepNumber}. ${s.description?.[detectedLang] || s.description?.en || ''}`)
+          .map(s => `  ${s.stepNumber}. ${s.description?.en || ''}`)
           .join('\n')
 
         const evidence = (article.requiredEvidence || [])
-          .map(e => `  - ${e[detectedLang] || e.en || ''}`)
+          .map(e => `  - ${e.en || ''}`)
           .join('\n')
 
-        const whereToReport = article.whereToReport?.[detectedLang]
-          || article.whereToReport?.en
-          || ''
+        const whereToReport = article.whereToReport?.en || ''
 
         return `
 [LEGAL ARTICLE ${i + 1}]
@@ -263,21 +285,10 @@ ${whereToReport ? `Where to Report: ${whereToReport}` : ''}
       }).join('\n\n---\n\n')
     : 'No specific legal articles were found for this query.'
 
-  const langLabel = detectedLang === 'rw' ? 'Kinyarwanda' : 'English'
-  const langEnforcement = detectedLang === 'rw'
-    ? 'The user is writing in KINYARWANDA. Your ENTIRE response MUST be in Kinyarwanda. Not English. Not Kiswahili. Not French. Kinyarwanda ONLY.'
-    : 'The user is writing in ENGLISH. Your ENTIRE response MUST be in English. Not Kiswahili. Not French. Not Kinyarwanda. English ONLY.'
-
-  // System prompt — strict, language-explicit, Kiswahili explicitly banned
+  // Always generate in English — translation to RW is handled in ragPipeline()
   const systemPrompt = `You are a professional Rwandan legal aid assistant. Your job is to help people understand their legal rights under Rwandan law.
 
-=== LANGUAGE ENFORCEMENT (NON-NEGOTIABLE) ===
-${langEnforcement}
-
-REQUIRED OUTPUT LANGUAGE: ${langLabel}
-FORBIDDEN LANGUAGES: Kiswahili, Swahili, French, any other language.
-Do NOT mix languages. Do NOT add translations. Do NOT add parenthetical explanations.
-Every single word in your response must be ${langLabel}.
+RESPOND IN ENGLISH ONLY. Do not use Kiswahili, French, or Kinyarwanda in your response.
 
 === HOW TO STRUCTURE EVERY RESPONSE ===
 Step 1 — State the crime: Identify what crime this is under Rwandan law (one sentence).
@@ -289,7 +300,7 @@ Step 5 — End with the emergency line: "Rwanda National Police: 112"
 === RULES ===
 - NEVER skip article citation. If you do not cite an article, your response is wrong.
 - NEVER invent articles or penalties not in the provided context.
-- If context has no relevant article, say exactly: ${detectedLang === 'rw' ? '"Nta makuru arambuye mfite kuri ubu — baza polisi yo hafi yawe (112)."' : '"I don\'t have a specific article for that — please visit your nearest police station or call 112."'}
+- If context has no relevant article, say exactly: "I don't have a specific article for that — please visit your nearest police station or call 112."
 - NEVER repeat the same sentence.
 - Keep response under 200 words.
 
@@ -307,7 +318,6 @@ ${contextBlock}`
   logger.info('Calling Groq API', {
     model: GROQ_MODEL,
     articlesProvided: retrievedArticles.length,
-    detectedLang,
     uiLang: language,
     historyLength: conversationHistory.length
   })
@@ -323,10 +333,10 @@ ${contextBlock}`
   let completion = await callGroq(messages)
   let rawResponse = completion.choices[0]?.message?.content || ''
 
-  // Language guard — if model returned Kiswahili, retry once with even stricter prompt
+  // Language guard — if model returned Kiswahili, retry once with stricter prompt
   if (containsKiswahili(rawResponse)) {
-    logger.warn('Kiswahili detected in response — retrying with stricter prompt', { detectedLang })
-    const stricterSystem = `CRITICAL INSTRUCTION: You MUST respond in ${langLabel} ONLY.\nKiswahili is STRICTLY FORBIDDEN. French is STRICTLY FORBIDDEN.\nIf you are unsure of a word in ${langLabel}, use a simpler word. NEVER switch to another language.\n\n${systemPrompt}`
+    logger.warn('Kiswahili detected in response — retrying with stricter prompt')
+    const stricterSystem = `CRITICAL INSTRUCTION: You MUST respond in ENGLISH ONLY.\nKiswahili is STRICTLY FORBIDDEN. French is STRICTLY FORBIDDEN.\n\n${systemPrompt}`
     const retryMessages = [{ role: 'system', content: stricterSystem }, ...messages.slice(1)]
     completion = await callGroq(retryMessages)
     rawResponse = completion.choices[0]?.message?.content || ''
@@ -338,7 +348,6 @@ ${contextBlock}`
   logger.info('Groq response received', {
     tokens: completion.usage?.total_tokens,
     model: GROQ_MODEL,
-    detectedLang,
     rawLength: rawResponse.length,
     cleanedLength: responseText.length
   })
@@ -391,25 +400,51 @@ function getSmallTalkReply(query, language) {
  * @returns {{ response: string, sources: Array }}
  */
 export async function ragPipeline(userQuery, language = 'en', history = []) {
+  // Detect actual language from the message text (overrides UI toggle)
+  const detectedLang = detectLanguage(userQuery, language)
+
   // Short-circuit: greetings and small-talk — no AI or DB call needed
   if (isGreeting(userQuery)) {
-    return { response: GREETING_REPLIES[language] || GREETING_REPLIES.en, sources: [] }
+    return { response: GREETING_REPLIES[detectedLang] || GREETING_REPLIES.en, sources: [] }
   }
-  const smallTalkReply = getSmallTalkReply(userQuery, language)
+  const smallTalkReply = getSmallTalkReply(userQuery, detectedLang)
   if (smallTalkReply) {
     return { response: smallTalkReply, sources: [] }
   }
 
-  const articles = await retrieveRelevantArticles(userQuery)
-  const response = await generateLegalResponse(userQuery, articles, language, history)
+  // ── Translation pipeline ──────────────────────────────────────────────────
+  // If the user wrote in Kinyarwanda:
+  //   1. Translate their query to English (better RAG search + AI accuracy)
+  //   2. Run RAG + AI fully in English
+  //   3. Translate the English response back to Kinyarwanda
+  //
+  // This means the AI always reasons in English (where it's strong) and the
+  // user always sees their own language (via clean translation).
+
+  let queryForAI = userQuery
+  if (detectedLang === 'rw') {
+    logger.info('Kinyarwanda query detected — translating to English for RAG')
+    queryForAI = await translateWithGroq(userQuery, 'en')
+    logger.info('Translated query', { original: userQuery, translated: queryForAI })
+  }
+
+  const articles = await retrieveRelevantArticles(queryForAI)
+  const englishResponse = await generateLegalResponse(queryForAI, articles, 'en', history)
+
+  // Translate English response to Kinyarwanda if that's what the user needs
+  let finalResponse = englishResponse
+  if (detectedLang === 'rw') {
+    logger.info('Translating English response to Kinyarwanda')
+    finalResponse = await translateWithGroq(englishResponse, 'rw')
+  }
 
   // Return cleaned source list for citation display in the UI
   const sources = articles.map(a => ({
     articleNumber: a.articleNumber,
     crimeType: a.crimeType,
-    summary: a.simplifiedExplanation?.[language] || a.simplifiedExplanation?.en || '',
-    lawText: a.originalText?.[language] || a.originalText?.en || ''
+    summary: a.simplifiedExplanation?.en || '',
+    lawText: a.originalText?.en || ''
   }))
 
-  return { response, sources }
+  return { response: finalResponse, sources }
 }
