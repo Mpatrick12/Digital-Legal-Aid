@@ -1,8 +1,12 @@
 /**
  * manualSeed.js
  *
- * Manually seeds the database with high-quality structured legal content
- * for the most common crimes in Rwanda.
+ * Seeds the database with structured legal content sourced from the
+ * official Rwanda Penal Code (Law No. 68/2018) as published in the
+ * Official Gazette no. Special of 27/09/2018 (penalcode2018.pdf).
+ *
+ * Article texts are verbatim from Documents/parsedLaws.json which was
+ * parsed directly from the official PDF.
  *
  * Run with:
  *   node backend/data/manualSeed.js
@@ -20,6 +24,7 @@ if (!MONGODB_URI) {
 }
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
+// Source: Law No. 68/2018 — Official Gazette no. Special of 27/09/2018
 
 const articles = [
 
@@ -28,12 +33,12 @@ const articles = [
     crimeType: 'Theft',
     articleNumber: 'Article 166',
     originalText: {
-      en: 'Article 166 of the Rwanda Penal Code: Any person who fraudulently takes a movable thing belonging to another person commits theft and is liable to imprisonment of not less than one (1) year and not more than three (3) years and a fine of not less than fifty thousand (50,000 RWF) and not more than two hundred thousand (200,000 RWF), or one of these penalties.',
-      rw: 'Ingingo ya 166 y\'Itegeko Ryerekeye Ibirego: Umuntu wese wigaba ibintu by\'undi muntu mu buryo bw\'ubugambanyi ahanishwa igifungo kitarenze imyaka itatu (3) n\'inzigo yo kuva ku bihumbi mirongo itanu (50.000 RWF) kugeza ku bihumbi magana abiri (200.000 RWF), cyangwa kimwe muri ibyo bihano.'
+      en: 'Article 166 — Penalties for theft (Law No. 68/2018, Official Gazette no. Special of 27/09/2018): Any person convicted of theft is liable to imprisonment of not less than one (1) year and not more than two (2) years and a fine of not less than one million Rwandan francs (FRW 1,000,000) and not more than two million Rwandan francs (FRW 2,000,000), community service for a period of six (6) months, or only one of these penalties.',
+      rw: 'Ingingo ya 166 — Igihano ku cyaha cyo kwiba (Itegeko No. 68/2018, Igazeti ya Leta Nº Intangarugero yo ku wa 27/09/2018): Umuntu wese uhamijwe n\'urukiko icyaha cyo kwiba, ahanishwa igifungo kitari munsi y\'umwaka umwe (1) ariko kitarenze imyaka ibiri (2), ihazabu y\'amafaranga y\'u Rwanda atari munsi ya miliyoni imwe (1.000.000 FRW) ariko atarenze miliyoni ebyiri (2.000.000 FRW), imirimo y\'inyungu rusange mu gihe cy\'amezi atandatu (6) cyangwa kimwe gusa muri ibyo bihano.'
     },
     simplifiedExplanation: {
-      en: 'Theft is when someone takes your property without your permission. This includes your phone, money, bag, laptop, or any possession. It is a serious crime in Rwanda punishable by up to 3 years in prison. Report it immediately — even if you did not see the thief\'s face.',
-      rw: 'Ubujura ni igikorwa cyo gufata ibintu by\'undi muntu nta ruhushya. Birimo telefone yawe, amafaranga, umufuko, mudasobwa, cyangwa ikintu cyose gifite agaciro. Ni icyaha gikomeye mu Rwanda gihana igifungo kigera ku myaka itatu (3). Tanga raporo ako kanya — ndetse niba atarabona mu maso uwabarana.'
+      en: 'Theft is when someone takes your property without your permission. This includes your phone, money, bag, laptop, or any possession. Under Article 166 of the 2018 Penal Code, theft is punishable by 1–2 years in prison and a fine of 1–2 million RWF. Report it immediately — even if you did not see the thief\'s face.',
+      rw: 'Ubujura ni igikorwa cyo gufata ibintu by\'undi muntu nta ruhushya. Birimo telefone yawe, amafaranga, umufuko, mudasobwa, cyangwa ikintu cyose gifite agaciro. Hakurikijwe ingingo ya 166 y\'Itegeko Ngenga ryo mu 2018, ubujura buhanishwa igifungo cy\'imyaka 1–2 n\'ihazabu yo hagati ya miliyoni imwe kugeza miliyoni ebyiri FRW. Tanga raporo ako kanya — ndetse niba atarabona mu maso uwabarana.'
     },
     reportingSteps: [
       { stepNumber: 1, description: { en: 'Go to your nearest Rwanda National Police station immediately — do not wait.', rw: 'Jya ku kigo cy\'Ubutabera / Polisi y\'Igihugu cy\'u Rwanda hafi yawe ako kanya — ntutinde.' } },
@@ -59,14 +64,14 @@ const articles = [
   // ── 2. ASSAULT ────────────────────────────────────────────────────────────
   {
     crimeType: 'Assault',
-    articleNumber: 'Article 149',
+    articleNumber: 'Article 121',
     originalText: {
-      en: 'Article 149 of the Rwanda Penal Code: Intentional bodily harm: Any person who voluntarily hits, wounds or commits any act of violence against another person is liable to imprisonment of not less than one (1) year and not more than five (5) years and a fine of not less than one hundred thousand (100,000 RWF) and not more than five hundred thousand (500,000 RWF).',
-      rw: 'Ingingo ya 149 y\'Itegeko Ryerekeye Ibirego — Gukubita / Gucumura ku bw\'umugambi: Umuntu wese ugenda kumena, gukubita, gucumura, cyangwa gukora igikorwa icyo aricyo cyose cy\'igitero ku bundi muntu ahanishwa igifungo kuva mu mwaka umwe (1) kugeza mu myaka itanu (5) n\'inzigo kuva ku bihumbi ijana (100.000 RWF) kugeza ku bihumbi magana atanu (500.000 RWF).'
+      en: 'Article 121 — Intentional assault or battery (Law No. 68/2018, Official Gazette no. Special of 27/09/2018): Any person who, wilfully, injures, beats or commits any serious violence against another person, commits an offence. Upon conviction, he/she is liable to imprisonment for a term of not less than three (3) years and not more than five (5) years and a fine of not less than five hundred thousand Rwandan francs (FRW 500,000) and not more than one million Rwandan francs (FRW 1,000,000).',
+      rw: 'Ingingo ya 121 — Gukubita cyangwa gukomeretsa ku bushake (Itegeko No. 68/2018, Igazeti ya Leta Nº Intangarugero yo ku wa 27/09/2018): Umuntu wese, abishaka, ukomeretsa undi, umukubita cyangwa umusagarira ku buryo bwa kiboko bubabaje aba akoze icyaha. Iyo abihamijwe n\'urukiko, ahanishwa igifungo kitari munsi y\'imyaka itatu (3) ariko kitarenze imyaka itanu (5) n\'ihazabu y\'amafaranga y\'u Rwanda atari munsi y\'ibihumbi magana atanu (500.000 FRW) ariko atarenze miliyoni imwe (1.000.000 FRW).'
     },
     simplifiedExplanation: {
-      en: 'Assault is when someone intentionally hits, beats or physically harms you. Rwandan law protects you — even a single punch is a crime. Penalties are up to 5 years in prison. You have the right to report any physical attack, regardless of who did it.',
-      rw: 'Gukubita umuntu ni igikorwa cyo kumena, gukubita, cyangwa gukora nabi ku mubiri w\'undi muntu by\'umugambi. Amategeko y\'u Rwanda akurinzaho — ndetse igitero kimwe ni icyaha. Nta gushidikanya — ufite uburenganzira bwo gutanga raporo ku gitero icyo aricyo cyose ku mubiri, hatitawe n\'uwagikoze.'
+      en: 'Intentional assault is when someone deliberately hits or injures you. Under Article 121 of the 2018 Penal Code it carries 3–5 years imprisonment and a fine of 500,000–1,000,000 RWF. You have the right to report any physical attack regardless of who did it.',
+      rw: 'Gukubita umuntu ku bushake ni igikorwa cyo kumena, gukubita, cyangwa gukora nabi ku mubiri w\'undi muntu by\'umugambi. Hakurikijwe ingingo ya 121 y\'Itegeko Ngenga ryo mu 2018, igihano ni igifungo cy\'imyaka 3–5 n\'ihazabu yo hagati ya 500.000 kugeza 1.000.000 FRW. Ufite uburenganzira bwo gutanga raporo ku gitero icyo aricyo cyose ku mubiri, hatitawe n\'uwagikoze.'
     },
     reportingSteps: [
       { stepNumber: 1, description: { en: 'Seek medical attention first if you are injured — go to the nearest hospital or health centre.', rw: 'Banza ugire ubuvuzi niba warebye inshike — jya ku bitaro cyangwa kigo nderabuzima hafi yawe.' } },
@@ -86,20 +91,20 @@ const articles = [
       rw: 'Polisi y\'Igihugu cy\'u Rwanda — kigo cy\'ubutabera hafi yawe (Ihutirwa: 112). Hanyuma jya ku bitaro bya hafi kugirango ubone ibimenyetso by\'ubuvuzi.'
     },
     tags: ['assault', 'physical violence', 'gukubita', 'bodily harm', 'attack', 'beaten'],
-    keywords: ['assault', 'attack', 'hit', 'beat', 'beaten', 'violence', 'fight', 'hurt', 'harmed', 'punched', 'kicked', 'gukubita', 'gutera', 'igitero', 'inshike', 'article 149']
+    keywords: ['assault', 'attack', 'hit', 'beat', 'beaten', 'violence', 'fight', 'hurt', 'harmed', 'punched', 'kicked', 'gukubita', 'gutera', 'igitero', 'inshike', 'article 121']
   },
 
   // ── 3. GBV / SEXUAL VIOLENCE ──────────────────────────────────────────────
   {
     crimeType: 'GBV',
-    articleNumber: 'Article 8 — Law No. 59/2008 on Prevention and Punishment of GBV',
+    articleNumber: 'Article 149',
     originalText: {
-      en: 'Article 8 of Law No. 59/2008 of 10/09/2008 on Prevention and Punishment of Gender-Based Violence: Any person who commits gender-based violence in whatever form is liable to imprisonment of not less than two (2) years and not more than five (5) years. Where the victim is a minor, a spouse, or the offence involves sexual violence, the penalty is imprisonment of not less than five (5) and not more than ten (10) years.',
-      rw: 'Ingingo ya 8 y\'Itegeko No 59/2008 ryo ku wa 10/09/2008 ryerekeye gukumira no guhana ihohoterwa rishingiye ku gitsina: Umuntu wese ukora ihohoterwa rishingiye ku gitsina mu buryo ubwo ari bwo bwose ahanishwa igifungo kuva mu myaka ibiri (2) kugeza mu myaka itanu (5). Iyo inzirakarengane ari umwana, uwo babana, cyangwa icyaha kirimo gufata ku ngufu, igihano ni igifungo kuva mu myaka itanu (5) kugeza mu myaka icumi (10).'
+      en: 'Article 149 — Sexual harassment (Law No. 68/2018, Official Gazette no. Special of 27/09/2018): Sexual harassment are repeated remarks or behaviour of sexual overtones towards a person that either undermine, violate his/her dignity because of their degrading or humiliating character which create against him/her an intimidating, hostile or unpleasant situation. Any person who commits any of the acts referred to in Paragraph One of this Article, commits an offence. Upon conviction, he/she is liable to imprisonment for a term of not less than one (1) year and not more than three (3) years and a fine of not less than two hundred thousand Rwandan francs (FRW 200,000) and not more than five hundred thousand Rwandan francs (FRW 500,000). See also Article 137 (sexual violence against a spouse: 3–5 years) for domestic/spousal GBV.',
+      rw: 'Ingingo ya 149 — Guhoza undi ku nkeke bifitanye isano n\'imibonano mpuzabitsina (Itegeko No. 68/2018, Igazeti ya Leta Nº Intangarugero yo ku wa 27/09/2018): Guhoza undi muntu ku nkeke ni igikorwa kibangamye cyo kubwira umuntu amagambo cyangwa gukora ibikorwa ku buryo buhoraho bifitanye isano n\'igitsina, bishobora kwangiza icyubahiro cye bitewe n\'uko biteesha agaciro cyangwa icyubahiro nyir\'ukubikorerwa cyangwa kumutera ubwoba cyangwa ikimwaro. Umuntu ukora kimwe mu bikorwa bivugwa mu gika cya mbere cy\'iyi ngingo, aba akoze icyaha. Iyo abihamijwe n\'urukiko, ahanishwa igifungo kitari munsi y\'umwaka umwe (1) ariko kitarenze imyaka itatu (3) n\'ihazabu y\'amafaranga y\'u Rwanda atari munsi y\'ibihumbi magana abiri (200.000 FRW) ariko atarenze ibihumbi magana atanu (500.000 FRW). Reba kandi ingingo ya 137 (ihohoterwa rishingiye ku gitsina uwo bashyingiranywe: imyaka 3–5) ku GBV yo mu rugo.'
     },
     simplifiedExplanation: {
-      en: 'Gender-Based Violence (GBV) includes physical violence, sexual assault/rape, psychological abuse, and economic abuse by a partner or family member. Rwanda has strong laws protecting all victims. You can report confidentially. Your testimony alone is enough to open a case — you do not need to provide physical evidence to get help.',
-      rw: 'Ihohoterwa rishingiye ku gitsina (GBV) rigizwe no guhohotera ku mubiri, gufata ku ngufu, guhohotera mu mutwe, no guhohotera mu by\'ubukungu bivuye ku mugenzi cyangwa umuntu wo mu muryango. U Rwanda rufite amategeko akomeye arinda inzirakarengane zose. Urashobora gutanga raporo mu banga. Impamyabuvuzi yawe bonyine ihagije kugirango ikirego gifunguwe — ntukeneye guha ibimenyetso ku mubiri kugirango ubone ubufasha.'
+      en: 'Gender-Based Violence (GBV) includes sexual harassment, physical violence, and spousal sexual violence. Article 149 of the 2018 Penal Code covers sexual harassment (1–3 years, 200K–500K RWF fine); Article 137 covers sexual violence against a spouse (3–5 years). Rwanda has strong laws protecting all victims. You can report confidentially. Your testimony alone is enough to open a case.',
+      rw: 'Ihohoterwa rishingiye ku gitsina (GBV) rigizwe no guhoza ku nkeke, guhohotera ku mubiri, no guhohotera bishingiye ku gitsina uwo bashyingiranywe. Ingingo ya 149 y\'Itegeko Ngenga ryo mu 2018 ireba guhoza ku nkeke bifitanye isano n\'igitsina (imyaka 1–3, ihazabu 200K–500K FRW); ingingo ya 137 ireba ihohoterwa rishingiye ku gitsina uwo bashyingiranywe (imyaka 3–5). U Rwanda rufite amategeko akomeye arinda inzirakarengane zose. Urashobora gutanga raporo mu banga. Impamyabuvuzi yawe bonyine ihagije kugirango ikirego gifunguwe.'
     },
     reportingSteps: [
       { stepNumber: 1, description: { en: 'Go to an Isange One Stop Centre — located at major hospitals like CHUK, King Faisal, and district hospitals. They provide confidential, free medical, legal, and psychosocial support all in one place.', rw: 'Jya kuri Isange One Stop Centre — iri mu bitaro bikuru nka CHUK, King Faisal, n\'ibitaro bya distiri. Bitanga ubuvuzi, ubufasha bw\'amategeko, n\'ubufasha bw\'imibereho by\'ibanga kandi by\'ubuntu.' } },
@@ -125,10 +130,10 @@ const articles = [
   // ── 4. FRAUD / SCAM ───────────────────────────────────────────────────────
   {
     crimeType: 'Fraud',
-    articleNumber: 'Article 187',
+    articleNumber: 'Article 150',
     originalText: {
-      en: 'Article 187 of the Rwanda Penal Code — Fraud: Any person who, by use of false names or false capacities, or by abuse of trust, or by the use of fraudulent maneuvers, induces another person to hand over funds, values or properties of any kind, or to render services or to supply financial statements causing prejudice to that person, is guilty of fraud and liable to imprisonment of not less than one (1) year and not more than five (5) years and a fine of not less than five hundred thousand (500,000 RWF).',
-      rw: 'Ingingo ya 187 y\'Itegeko Ryerekeye Ibirego — Uburiganya: Umuntu wese ukoresha amazina y\'abandi, cyangwa akoresha ubushobozi bw\'inyeshyamba, cyangwa agakoresha inzira z\'uburiganya gutuma undi muntu amuhaye amafaranga, ibintu, cyangwa akamushinja imirimo ituma agirwa ingaruka mbi, ahanishwa igifungo kuva mu mwaka umwe (1) kugeza mu myaka itanu (5) n\'inzigo itarengwa ibihumbi magana n\'ingana (500.000 RWF).'
+      en: 'Article 150 — Fraudulent use of family property (Law No. 68/2018, Official Gazette no. Special of 27/09/2018): Any person who gives, sells, mortgages or uses a family property fraudulently obtained from a spouse, commits an offence. Upon conviction, he/she is liable to imprisonment for a term of not less than three (3) months and not more than six (6) months. Note: For general fraud, swindling and obtaining property by deception, see complementary provisions under Chapter on Patrimonial Offences (Articles 160–185) and the broader anti-fraud framework of the Penal Code.',
+      rw: 'Ingingo ya 150 — Gukoresha umutungo w\'urugo ku buryo bw\'uburiganya (Itegeko No. 68/2018, Igazeti ya Leta Nº Intangarugero yo ku wa 27/09/2018): Umuntu wese utanga, ugurisha, ugwatiriza cyangwa ukoresha umutungo w\'urugo ariganyije uwo bashyingiranywe, aba akoze icyaha. Iyo abihamijwe n\'urukiko ahanishwa igifungo kitari munsi y\'amezi atatu (3) ariko kitageze ku mezi atandatu (6). Icyitonderwa: Ku buriganya rusange, guriganya, no gufata ibintu hifashishijwe uburyarya, reba ingingo zuzuza iz\'umutwe w\'Ibyaha Bijyanye n\'Umutungo (Ingingo 160–185) n\'ingamba rusange z\'Itegeko Ngenga ryerekeye kurwanya uburiganya.'
     },
     simplifiedExplanation: {
       en: 'Fraud is when someone tricks or deceives you into giving them your money, property, or personal information. This includes phone scams, fake job offers, fake investment schemes, online scams, and identity theft. If someone tricked you, it is a crime — report it even if you feel embarrassed.',
@@ -156,12 +161,16 @@ const articles = [
   },
 
   // ── 5. CORRUPTION / BRIBERY ───────────────────────────────────────────────
+  // Note: The 2018 Penal Code (Law No. 68/2018) does not directly codify the
+  // main bribery offences — those are governed by Law No. 54/2021 on the
+  // Prevention and Punishment of Corruption (replacing Law No. 001/2012).
+  // The article text below is from that dedicated anti-corruption law.
   {
     crimeType: 'Corruption',
-    articleNumber: 'Article 641 — Law No. 001/2012 on Anti-Corruption',
+    articleNumber: 'Article 30 — Law No. 54/2021 on Prevention and Punishment of Corruption',
     originalText: {
-      en: 'Article 641 of the Rwanda Penal Code — Bribery of a Public Officer: Any person who, in any manner, directly or indirectly, offers, promises, gives, or accepts money, gifts, favours, or advantages to or from a public officer in exchange for an act or omission related to their public duties is liable to imprisonment of not less than five (5) years and not more than ten (10) years and a fine of not less than one million (1,000,000 RWF) and not more than five million (5,000,000 RWF).',
-      rw: 'Ingingo ya 641 y\'Itegeko Ryerekeye Ibirego — Gutunga Ruswa: Umuntu wese ukora mu buryo ubwo ari bwo bwose, hanze cyangwa mu bwihisho, atanga, atwaza, agabana, cyangwa yakira amafaranga, ingabire, ibyiza, cyangwa inyungu z\'ubwoko ubwo ari bwo bwose kuri / kuva ku munyamabanga wa leta buringanire n\'igikorwa cyangwa kwirinda gukora bijyanye n\'inshingano ze za leta ahanishwa igifungo kuva mu myaka itanu (5) kugeza mu myaka icumi (10) cy\'umunyagitugu n\'inzigo iva ku bihumbi ihumbi (1.000.000 RWF) kugeza ku bihumbi ihumbi bitanu (5.000.000 RWF).'
+      en: 'Article 30 of Law No. 54/2021 of 13/10/2021 on Prevention and Punishment of Corruption (Official Gazette no. Special of 13/10/2021) — Bribery: Any person who, directly or indirectly, promises, offers or gives to a public officer or a person invested with a public mandate, for himself/herself or for another person, an undue advantage in order that the public officer or the person invested with a public mandate acts or refrains from acting in the exercise of his/her official functions, commits bribery. Upon conviction he/she is liable to imprisonment for a term of not less than five (5) years and not more than ten (10) years and a fine of not less than five million Rwandan francs (FRW 5,000,000) and not more than ten million Rwandan francs (FRW 10,000,000).',
+      rw: 'Ingingo ya 30 y\'Itegeko No. 54/2021 ryo ku wa 13/10/2021 ryerekeye gukumira no guhana ruswa (Igazeti ya Leta Nº Intangarugero yo ku wa 13/10/2021) — Gutunga ruswa: Umuntu wese, hanze cyangwa mu bwihisho, uwemeza, uha cyangwa atanga ku munyamabanga wa leta cyangwa umuntu ushinzwe akazi ka leta, we ubwe cyangwa undi muntu, inyungu itavugwa mu mategeko kugirango uwo munyamabanga wa leta cyangwa uwo muntu ushinzwe akazi ka leta akore cyangwa yirinda gukora mu nshingano ze za leta, aba akoze ruswa. Iyo abihamijwe n\'urukiko, ahanishwa igifungo kitari munsi y\'imyaka itanu (5) ariko kitarenze imyaka icumi (10) n\'ihazabu y\'amafaranga y\'u Rwanda atari munsi y\'amafaranga miliyoni eshanu (5.000.000 FRW) ariko atarenze miliyoni icumi (10.000.000 FRW).'
     },
     simplifiedExplanation: {
       en: 'Bribery and corruption are serious crimes in Rwanda. If a government official, police officer, teacher, or any public servant asks you for money or gifts in exchange for doing their job — that is bribery and it is illegal. You can report it confidentially. Rwanda has a zero-tolerance policy on corruption.',
@@ -192,10 +201,10 @@ const articles = [
   // ── 6. MURDER / HOMICIDE ─────────────────────────────────────────────────
   {
     crimeType: 'Murder',
-    articleNumber: 'Article 104',
+    articleNumber: 'Article 107',
     originalText: {
-      en: 'Article 104 of the Rwanda Penal Code — Intentional Homicide (Murder): Any person who intentionally causes the death of another person is guilty of murder and is liable to life imprisonment. Where the killing is premeditated, or involves aggravating circumstances such as killing a parent, child, or public official, the penalty is mandatory life imprisonment without possibility of parole.',
-      rw: 'Ingingo ya 104 y\'Itegeko Ryerekeye Ibirego — Ubwicanyi bw\'umugambi: Umuntu wese ugenza mu bw\'umugambi guteza urupfu undi muntu ahanishwa igifungo cya burundu. Mu gihe ubwicanyi bwateganyijwe cyangwa bugaragaramo ingaruka z\'inyomeko nka kwica umubyeyi, umwana, cyangwa umuyobozi wa leta, igihano ni igifungo cya burundu nta guhunguka.'
+      en: 'Article 107 — Voluntary murder and its punishment (Law No. 68/2018, Official Gazette no. Special of 27/09/2018): A person who intentionally kills another person commits murder. Upon conviction, he/she is liable to life imprisonment.',
+      rw: 'Ingingo ya 107 — Ubwicanyi buturutse ku bushake n\'uko buhanwa (Itegeko No. 68/2018, Igazeti ya Leta Nº Intangarugero yo ku wa 27/09/2018): Umuntu wica undi abishaka, aba akoze icyaha. Iyo abihamijwe n\'urukiko, ahanishwa igihano cy\'igifungo cya burundu.'
     },
     simplifiedExplanation: {
       en: 'Murder is the intentional killing of another person. It carries the most severe penalty in Rwandan law — life imprisonment. If you have witnessed a murder, or know information about a killing, you have a legal duty to report it. Failure to report a serious crime is itself an offence under Rwandan law.',
@@ -224,14 +233,14 @@ const articles = [
   // ── 7. DRUG OFFENCES ─────────────────────────────────────────────────────
   {
     crimeType: 'Drug',
-    articleNumber: 'Article 255',
+    articleNumber: 'Article 263',
     originalText: {
-      en: 'Article 255 of the Rwanda Penal Code — Possession, trafficking, and use of narcotics: Any person who without legal authorisation manufactures, imports, exports, possesses, sells, transports, or facilitates the use of narcotic or psychotropic substances is liable to imprisonment of not less than five (5) years and not more than ten (10) years and a fine of not less than one million (1,000,000 RWF) and not more than five million (5,000,000 RWF).',
-      rw: 'Ingingo ya 255 y\'Itegeko Ryerekeye Ibirego — Kubyara, gutwara mu mahanga, gufata, kugurisha, gutwara, cyangwa gufasha gukoresha ibiyobyabwenge: Umuntu wese utabiherewe uburenganzira buteganyijwe n\'amategeko ukora imirimo yo guteranya, gutwara mu mahanga, gufata, kugurisha, gutwara, cyangwa gufasha gukoresha ibiyobyabwenge ahanishwa igifungo kuva mu myaka itanu (5) kugeza mu myaka icumi (10) n\'inzigo iva ku bihumbi ihumbi (1.000.000 RWF) kugeza ku bihumbi ihumbi bitanu (5.000.000 RWF).'
+      en: 'Article 263 — Carrying out acts related to the use of narcotic drugs or psychotropic substances (Law No. 68/2018, Official Gazette no. Special of 27/09/2018): Any person who, in any way, eats, drinks, injects himself/herself, inhales or one who anoints oneself with psychotropic substances, commits an offence. Any person convicted of any of the acts mentioned in Paragraph One of this Article is liable to imprisonment for a term of not less than one (1) year and not more than two (2) years and a fine. See also Article 264 (facilitating another person to use narcotic drugs) and Article 266 (manufacturing or trafficking prohibited substances in medicine).',
+      rw: 'Ingingo ya 263 — Gukora ibikorwa byerekeranye n\'ibiyobyabwenge cyangwa urusobe rw\'imiti ikoreshwa nka byo (Itegeko No. 68/2018, Igazeti ya Leta Nº Intangarugero yo ku wa 27/09/2018): Umuntu wese ufatanwa, urya, unywa, witera, uhumeka cyangwa wisiga mu buryo ubwo aribwo bwose ibiyobyabwenge cyangwa urusobe rw\'imiti ikoreshwa nka byo, aba akoze icyaha. Umuntu wese uhamijwe n\'urukiko gukora ibikorwa bivugwa mu gika cya mbere cy\'iyi ngingo, ahanishwa igifungo kitari munsi y\'umwaka umwe (1) kugeza mu myaka abiri (2) n\'ihazabu. Reba kandi ingingo ya 264 (korohereza umuntu gukoresha ibiyobyabwenge) n\'ingingo ya 266 (gukora cyangwa gucuruza ibintu bibujijwe mu buvuzi).'
     },
     simplifiedExplanation: {
-      en: 'Possession, sale, or trafficking of illegal drugs (including marijuana/cannabis, cocaine, heroin) is a serious crime in Rwanda punishable by 5–10 years in prison. If you have been forced or pressured into carrying or selling drugs, or if you know someone who is selling drugs, you can report it confidentially.',
-      rw: 'Gutunga, kugurisha, cyangwa gutwara ibiyobyabwenge bibi (harimo injangwe/cannabis, cocaine, heroine) ni icyaha gikomeye mu Rwanda gihana igifungo cy\'imyaka 5-10. Niba wagatiwe gufata cyangwa kugurisha ibiyobyabwenge, cyangwa niba uzi umuntu ugurisha ibiyobyabwenge, urashobora gutanga raporo mu banga.'
+      en: 'Using, possessing, or facilitating the use of illegal drugs (including cannabis, cocaine, heroin) is a crime under Article 263 of the 2018 Penal Code, punishable by 1–2 years imprisonment. Manufacturing or trafficking prohibited substances carries higher penalties under Articles 264–266. If you know someone dealing drugs, you can report it confidentially.',
+      rw: 'Gukoresha, gutunga, cyangwa korohereza gukoresha ibiyobyabwenge bibi (harimo injangwe/cannabis, cocaine, heroine) ni icyaha hakurikijwe ingingo ya 263 y\'Itegeko Ngenga ryo mu 2018, gihana igifungo cy\'imyaka 1–2. Gukora cyangwa gucuruza ibintu bibujijwe bifite ibihano bikomeye hakurikijwe ingingo ya 264–266. Niba uzi umuntu ugurisha ibiyobyabwenge, urashobora gutanga raporo mu banga.'
     },
     reportingSteps: [
       { stepNumber: 1, description: { en: 'Report drug dealing or trafficking to Rwanda National Police: 112 or Rwanda Investigation Bureau (RIB): +250 788 177 177.', rw: 'Tanga raporo ku kugurisha cyangwa gutwara ibiyobyabwenge kuri Polisi y\'Igihugu cy\'u Rwanda: 112 cyangwa Rwanda Investigation Bureau (RIB): +250 788 177 177.' } },
@@ -248,7 +257,7 @@ const articles = [
       rw: 'Polisi y\'Igihugu cy\'u Rwanda: 112 | Inomero ya RIB yo gutangira amakuru utazwi: 3779 | Rwanda Investigation Bureau: +250 788 177 177'
     },
     tags: ['drug', 'narcotics', 'ibiyobyabwenge', 'cannabis', 'trafficking', 'possession'],
-    keywords: ['drug', 'drugs', 'narcotics', 'marijuana', 'cannabis', 'cocaine', 'heroin', 'selling drugs', 'drug dealer', 'ibiyobyabwenge', 'injangwe', 'article 255']
+    keywords: ['drug', 'drugs', 'narcotics', 'marijuana', 'cannabis', 'cocaine', 'heroin', 'selling drugs', 'drug dealer', 'ibiyobyabwenge', 'injangwe', 'article 263']
   }
 ]
 
