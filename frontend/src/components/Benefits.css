@@ -1,98 +1,62 @@
+/* ─── Benefits ──────────────────────────────────────────────── */
 .benefits {
-  padding: 80px 0;
-  background: #f9fafb;
+  padding: 96px 0;
+  background: var(--gray-50);
 }
 
 .benefits-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 32px;
+  gap: 24px;
 }
 
 .benefit-card {
-  background: white;
-  padding: 40px;
-  border-radius: 16px;
+  background: var(--surface);
+  padding: 32px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   display: flex;
-  gap: 24px;
-  transition: all 0.3s;
+  gap: 20px;
+  align-items: flex-start;
+  transition: all var(--transition-slow);
 }
-
 .benefit-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--brand-200);
 }
 
 .benefit-icon-wrapper {
   flex-shrink: 0;
-  width: 80px;
-  height: 80px;
-  background: var(--light-blue);
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  background: var(--brand-50);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--brand-600);
 }
 
-.benefit-content {
-  flex: 1;
-}
+.benefit-content { flex: 1; }
 
 .benefit-title {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
 }
 
 .benefit-description {
-  font-size: 15px;
-  color: var(--text-gray);
-  line-height: 1.6;
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.65;
 }
 
 @media (max-width: 768px) {
-  .benefits {
-    padding: 60px 0;
-  }
-  
-  .benefits-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .benefit-card {
-    flex-direction: column;
-    padding: 28px;
-    text-align: center;
-  }
-  
-  .benefit-icon-wrapper {
-    margin: 0 auto;
-  }
+  .benefits { padding: 64px 0; }
+  .benefits-grid { grid-template-columns: 1fr; gap: 16px; }
+  .benefit-card { padding: 22px; }
 }
 
-@media (max-width: 480px) {
-  .benefits {
-    padding: 40px 0;
-  }
-
-  .benefit-card {
-    padding: 20px;
-    gap: 14px;
-  }
-
-  .benefit-icon-wrapper {
-    width: 60px;
-    height: 60px;
-  }
-
-  .benefit-title {
-    font-size: 18px;
-  }
-
-  .benefit-description {
-    font-size: 14px;
-  }
-}

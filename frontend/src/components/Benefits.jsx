@@ -4,22 +4,22 @@ import './Benefits.css'
 function Benefits() {
   const benefits = [
     {
-      icon: <Clock size={48} color="#2563eb" />,
+      icon: <Clock size={22} />,
       title: 'Save Time & Money',
       description: 'No need to travel to offices or wait in lines. Get information instantly from your phone.'
     },
     {
-      icon: <BookOpen size={48} color="#2563eb" />,
+      icon: <BookOpen size={22} />,
       title: 'Understand Your Rights',
       description: 'Legal jargon translated into simple language that anyone can understand.'
     },
     {
-      icon: <Shield size={48} color="#2563eb" />,
+      icon: <Shield size={22} />,
       title: 'Know How to Report',
-      description: 'Clear step-by-step procedures so you know exactly what to do when you\'re a victim of crime.'
+      description: "Clear step-by-step procedures so you know exactly what to do when you're a victim of crime."
     },
     {
-      icon: <Smartphone size={48} color="#2563eb" />,
+      icon: <Smartphone size={22} />,
       title: 'Mobile Accessible',
       description: 'Works on any smartphone, even with low data. Progressive Web App technology for offline access.'
     }
@@ -31,8 +31,11 @@ function Benefits() {
         <div className="section-header">
           <span className="section-badge">Why Choose Us</span>
           <h2 className="section-title">Benefits for Citizens</h2>
+          <p className="section-subtitle">
+            Designed to be accessible, simple, and useful for every Rwandan
+          </p>
         </div>
-        
+
         <div className="benefits-grid">
           {benefits.map((benefit, index) => (
             <div key={index} className="benefit-card">

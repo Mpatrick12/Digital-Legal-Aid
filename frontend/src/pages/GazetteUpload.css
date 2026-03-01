@@ -15,7 +15,7 @@
   gap: 8px;
   padding: 10px 20px;
   background: white;
-  color: var(--text-dark);
+  color: var(--text-primary);
   border-radius: 8px;
   font-weight: 500;
   font-size: 14px;
@@ -25,7 +25,7 @@
 }
 
 .back-link:hover {
-  background: var(--light-blue);
+  background: var(--brand-50);
   transform: translateX(-4px);
 }
 
@@ -49,13 +49,13 @@
 .upload-header h1 {
   font-size: 32px;
   font-weight: 700;
-  color: var(--text-dark);
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .upload-header p {
   font-size: 16px;
-  color: var(--text-gray);
+  color: var(--text-secondary);
 }
 
 .upload-form {
@@ -79,7 +79,7 @@
 .form-group label {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
 }
 
 .form-group input,
@@ -94,7 +94,7 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--primary-blue);
+  border-color: var(--brand-600);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -109,7 +109,7 @@
 }
 
 .file-upload-area:hover {
-  border-color: var(--primary-blue);
+  border-color: var(--brand-600);
   background: #f9fafb;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .file-upload-content p {
-  color: var(--text-gray);
+  color: var(--text-secondary);
   font-size: 14px;
   margin-top: 12px;
 }
@@ -136,12 +136,12 @@
   justify-content: center;
   gap: 8px;
   margin-top: 12px;
-  color: var(--text-dark);
+  color: var(--text-primary);
   font-weight: 500;
 }
 
 .file-size {
-  color: var(--text-gray);
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -171,7 +171,7 @@
 
 .upload-btn {
   padding: 14px 32px;
-  background: var(--primary-blue);
+  background: var(--brand-600);
   color: white;
   border-radius: 8px;
   font-size: 16px;
@@ -180,7 +180,7 @@
 }
 
 .upload-btn:hover:not(:disabled) {
-  background: var(--dark-blue);
+  background: var(--brand-700);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
@@ -200,7 +200,7 @@
 .upload-info h3 {
   font-size: 18px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
   margin-bottom: 16px;
 }
 
@@ -210,7 +210,7 @@
 
 .upload-info li {
   font-size: 15px;
-  color: var(--text-gray);
+  color: var(--text-secondary);
   line-height: 1.8;
   margin-bottom: 8px;
 }

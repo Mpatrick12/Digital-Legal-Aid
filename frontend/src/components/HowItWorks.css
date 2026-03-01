@@ -1,18 +1,20 @@
+/* ─── How It Works ──────────────────────────────────────────── */
 .how-it-works {
-  padding: 80px 0;
-  background: white;
+  padding: 96px 0;
+  background: var(--surface);
 }
 
 .section-badge-light {
-  background: white !important;
-  color: var(--text-dark) !important;
-  border: 1px solid var(--border);
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border) !important;
 }
 
+/* Steps */
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 48px;
+  gap: 40px;
   margin-bottom: 80px;
 }
 
@@ -21,49 +23,53 @@
 }
 
 .step-number {
-  width: 72px;
-  height: 72px;
-  background: var(--primary-blue);
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--brand-600), var(--brand-800));
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  font-weight: 700;
-  margin: 0 auto 24px;
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0 auto 20px;
+  box-shadow: 0 4px 14px rgb(37 99 235 / .28);
 }
 
 .step-title {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
 }
 
 .step-description {
-  font-size: 15px;
-  color: var(--text-gray);
-  line-height: 1.6;
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.65;
 }
 
+/* Stats banner */
 .stats-section {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  padding: 60px;
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--brand-700) 0%, var(--brand-900) 100%);
+  padding: 60px 64px;
+  border-radius: var(--radius-xl);
   text-align: center;
   color: white;
 }
 
 .stats-title {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 12px;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
 }
 
 .stats-subtitle {
-  font-size: 16px;
-  opacity: 0.9;
+  font-size: 15px;
+  color: rgba(255,255,255,.75);
   margin-bottom: 48px;
 }
 
@@ -73,100 +79,35 @@
   gap: 32px;
 }
 
-.stat-card {
-  text-align: center;
-}
+.stat-card { text-align: center; }
 
 .stat-value {
-  font-size: 48px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+  line-height: 1;
 }
 
 .stat-label {
-  font-size: 16px;
-  opacity: 0.9;
+  font-size: 14px;
+  color: rgba(255,255,255,.75);
+  font-weight: 500;
 }
 
+/* ─── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .how-it-works {
-    padding: 60px 0;
-  }
-  
-  .steps-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    margin-bottom: 60px;
-  }
-  
-  .stats-section {
-    padding: 40px 24px;
-  }
-  
-  .stats-title {
-    font-size: 24px;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-  
-  .stat-value {
-    font-size: 36px;
-  }
-  
-  .stat-label {
-    font-size: 14px;
-  }
+  .how-it-works { padding: 64px 0; }
+  .steps-grid { grid-template-columns: 1fr; gap: 32px; margin-bottom: 56px; }
+  .stats-section { padding: 40px 24px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .stat-value { font-size: 34px; }
 }
 
 @media (max-width: 480px) {
-  .how-it-works {
-    padding: 40px 0;
-  }
-
-  .steps-grid {
-    gap: 28px;
-    margin-bottom: 40px;
-  }
-
-  .step-number {
-    width: 56px;
-    height: 56px;
-    font-size: 24px;
-  }
-
-  .step-title {
-    font-size: 18px;
-  }
-
-  .step-description {
-    font-size: 14px;
-  }
-
-  .stats-section {
-    padding: 28px 14px;
-  }
-
-  .stats-title {
-    font-size: 20px;
-  }
-
-  .stats-subtitle {
-    font-size: 13px;
-    margin-bottom: 28px;
-  }
-
-  .stats-grid {
-    gap: 14px;
-  }
-
-  .stat-value {
-    font-size: 28px;
-  }
-
-  .stat-label {
-    font-size: 12px;
-  }
+  .how-it-works { padding: 48px 0; }
+  .stats-section { padding: 28px 16px; }
+  .stats-grid { gap: 16px; }
+  .stat-value { font-size: 28px; }
 }
+

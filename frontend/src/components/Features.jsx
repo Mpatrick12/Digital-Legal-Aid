@@ -4,22 +4,22 @@ import './Features.css'
 function Features() {
   const features = [
     {
-      icon: <Search size={40} color="#2563eb" />,
+      icon: <Search size={22} />,
       title: 'Search Legal Documents',
       description: 'Search the Official Gazette using simple keywords. Find laws explained in plain language you can understand.'
     },
     {
-      icon: <FileText size={40} color="#2563eb" />,
+      icon: <FileText size={22} />,
       title: 'Reporting Procedures',
       description: 'Step-by-step guides on how to report theft, assault, GBV, and other crimes. Know exactly where to go and what to bring.'
     },
     {
-      icon: <Users size={40} color="#2563eb" />,
+      icon: <Users size={22} />,
       title: 'Legal Aid Directory',
       description: 'Find free legal aid services and lawyers in your district. Get connected to MAJ offices and professional attorneys.'
     },
     {
-      icon: <Phone size={40} color="#2563eb" />,
+      icon: <Phone size={22} />,
       title: 'Emergency Contacts',
       description: 'Quick access to police, GBV hotline, ambulance, and other emergency numbers when you need immediate help.'
     }
@@ -35,7 +35,7 @@ function Features() {
             A centralized platform that simplifies legal information and empowers citizens
           </p>
         </div>
-        
+
         <div className="features-grid">
           {features.map((feature, index) => (
             <div key={index} className="feature-card">

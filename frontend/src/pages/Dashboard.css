@@ -1,13 +1,14 @@
 .dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  padding-bottom: 40px;
+  background: var(--gray-50);
+  padding-bottom: 48px;
 }
 
 .dashboard-nav {
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 12px 0;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -42,13 +43,13 @@
 .logo-title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
   line-height: 1.2;
 }
 
 .logo-subtitle {
   font-size: 11px;
-  color: var(--text-gray);
+  color: var(--text-secondary);
   line-height: 1;
 }
 
@@ -64,18 +65,18 @@
   align-items: center;
   justify-content: center;
   background: none;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: 8px;
   cursor: pointer;
-  color: var(--text-dark);
+  color: var(--text-primary);
   transition: background 0.2s;
   flex-shrink: 0;
   margin-left: auto;
 }
 
 .hamburger-btn:hover {
-  background: #f3f4f6;
+  background: var(--gray-100);
 }
 
 /* Mobile drawer — hidden by default */
@@ -86,8 +87,8 @@
   left: 0;
   right: 0;
   width: 100%;
-  background: white;
-  border-bottom: 2px solid #e5e7eb;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   z-index: 99;
   animation: slideDown 0.2s ease;
@@ -117,10 +118,10 @@
   padding: 11px 14px;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 500;
-  color: var(--text-dark);
+  color: var(--text-primary);
   cursor: pointer;
   text-align: left;
   text-decoration: none;
@@ -128,16 +129,16 @@
 }
 
 .drawer-tab:hover {
-  background: #f3f4f6;
+  background: var(--gray-100);
 }
 
 .drawer-tab.active {
   background: #eff6ff;
-  color: var(--primary-blue);
+  color: var(--brand-600);
 }
 
 .drawer-footer {
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--gray-100);
   padding: 10px 16px 14px;
   display: flex;
   flex-direction: column;
@@ -150,13 +151,13 @@
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
 }
 
 .drawer-email {
   font-size: 12px;
   font-weight: 400;
-  color: var(--text-gray);
+  color: var(--text-secondary);
   margin-left: 2px;
 }
 
@@ -171,9 +172,9 @@
   gap: 8px;
   padding: 10px 20px;
   background: transparent;
-  color: var(--text-gray);
+  color: var(--text-secondary);
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s;
@@ -181,13 +182,13 @@
 }
 
 .nav-tab:hover {
-  background: #f3f4f6;
-  color: var(--text-dark);
+  background: var(--gray-100);
+  color: var(--text-primary);
 }
 
 .nav-tab.active {
   background: #eff6ff;
-  color: var(--primary-blue);
+  color: var(--brand-600);
   border-color: #bfdbfe;
 }
 
@@ -204,17 +205,17 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-size: 14px;
-  color: var(--text-dark);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .language-selector:hover {
-  background: #f3f4f6;
+  background: var(--gray-100);
 }
 
 .admin-link-btn {
@@ -223,7 +224,7 @@
   padding: 8px 16px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
@@ -249,22 +250,22 @@
 .user-name {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
   line-height: 1.2;
 }
 
 .user-email {
   font-size: 12px;
-  color: var(--text-gray);
+  color: var(--text-secondary);
   line-height: 1.2;
 }
 
 .logout-btn {
   padding: 8px 16px;
-  background: white;
-  color: var(--text-dark);
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -297,15 +298,14 @@
 }
 
 .welcome-section {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-800) 100%);
   padding: 32px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   gap: 24px;
   color: white;
+  box-shadow: 0 4px 20px rgb(37 99 235 / .20);
 }
 
 .welcome-icon {
@@ -313,24 +313,25 @@
   height: 72px;
   background: rgba(255, 255, 255, 0.2);
   padding: 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .welcome-section h1 {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   margin-bottom: 4px;
 }
 
 .welcome-section p {
-  font-size: 16px;
-  opacity: 0.9;
+  font-size: 15px;
+  opacity: 0.88;
 }
 
 .quick-access {
-  background: white;
+  background: var(--surface);
   padding: 32px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -344,7 +345,7 @@
 .quick-access h2 {
   font-size: 20px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
 }
 
 .upload-link {
@@ -354,7 +355,7 @@
   padding: 10px 20px;
   background: #7c3aed;
   color: white;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
   transition: all 0.2s;
@@ -373,10 +374,10 @@
 }
 
 .access-card {
-  background: white;
+  background: var(--surface);
   padding: 24px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   transition: all 0.2s;
   cursor: pointer;
 }
@@ -384,7 +385,7 @@
 .access-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  border-color: var(--primary-blue);
+  border-color: var(--brand-600);
 }
 
 /* non-functional cards — no hover lift */
@@ -397,15 +398,15 @@
 .access-card--soon:hover {
   transform: none;
   box-shadow: none;
-  border-color: #e5e7eb;
+  border-color: var(--border);
 }
 
 .coming-soon-badge {
   display: inline-block;
   margin-top: 10px;
   padding: 3px 10px;
-  background: #f3f4f6;
-  color: var(--text-gray);
+  background: var(--gray-100);
+  color: var(--text-secondary);
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
@@ -414,7 +415,7 @@
 }
 
 .not-set {
-  color: var(--text-gray);
+  color: var(--text-secondary);
   font-style: italic;
   font-size: 13px;
 }
@@ -452,20 +453,20 @@
 .access-card h3 {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .access-card p {
   font-size: 14px;
-  color: var(--text-gray);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .recent-activity {
-  background: white;
+  background: var(--surface);
   padding: 32px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -479,13 +480,13 @@
 .dashboard .section-header h2 {
   font-size: 18px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
 }
 
 .activity-content {
   padding: 60px 20px;
   text-align: center;
-  color: var(--text-gray);
+  color: var(--text-secondary);
 }
 
 .empty-icon {
@@ -504,19 +505,19 @@
 }
 
 .account-info-card {
-  background: white;
+  background: var(--surface);
   padding: 28px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .account-info-card h3 {
   font-size: 18px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border);
 }
 
 .info-group {
@@ -531,13 +532,13 @@
   display: block;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-gray);
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 
 .info-group p {
   font-size: 15px;
-  color: var(--text-dark);
+  color: var(--text-primary);
   font-weight: 500;
 }
 

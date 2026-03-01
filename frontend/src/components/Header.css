@@ -1,117 +1,150 @@
+/* ─── Header ───────────────────────────────────────────────── */
 .header {
-  background: white;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
-  padding: 16px 0;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 200;
+  padding: 0;
 }
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
+.header-inner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  transition: opacity 0.2s;
+  height: 64px;
+  gap: 8px;
 }
 
-.logo:hover {
-  opacity: 0.8;
-}
-
-.logo-text h1 {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-dark);
-}
-
-.logo-text p {
-  font-size: 12px;
-  color: var(--text-gray);
-}
-
-.header-auth {
+/* ─── Logo ──────────────────────────────────────────────────── */
+.header-logo {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
+  margin-right: auto;
 }
 
-.sign-in-btn {
-  padding: 10px 20px;
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 14px;
-  color: var(--text-dark);
-  transition: all 0.2s;
-  white-space: nowrap;
+.header-logo-icon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--brand-600), var(--brand-800));
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgb(37 99 235 / 0.28);
 }
 
-.sign-in-btn:hover {
-  background: var(--light-blue);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
+.header-logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
 }
 
-.sign-up-btn {
-  padding: 10px 20px;
-  background: var(--primary-blue);
-  color: white;
-  border: 1px solid var(--primary-blue);
-  border-radius: 8px;
+.header-logo-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-900);
+  letter-spacing: -0.01em;
+}
+
+.header-logo-sub {
+  font-size: 10px;
   font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ─── Nav ───────────────────────────────────────────────────── */
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.header-nav-link {
+  padding: 7px 12px;
   font-size: 14px;
-  transition: all 0.2s;
-  white-space: nowrap;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+.header-nav-link:hover {
+  background: var(--gray-100);
+  color: var(--text-primary);
 }
 
-.sign-up-btn:hover {
-  background: var(--dark-blue);
-  border-color: var(--dark-blue);
+.header-nav-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  margin: 0 8px;
 }
 
+.header-auth-btn {
+  font-size: 14px;
+  padding: 8px 16px !important;
+}
+
+/* ─── Mobile hamburger ──────────────────────────────────────── */
+.header-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--gray-600);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  line-height: 0;
+}
+.header-menu-btn:hover { background: var(--gray-100); }
+
+/* ─── Responsive ────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .logo-text h1 {
-    font-size: 16px;
-  }
+  .header-logo { margin-right: 0; }
 
-  .logo-text p {
+  .header-nav {
     display: none;
+    position: fixed;
+    inset: 64px 0 0 0;
+    background: var(--surface);
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 4px;
+    border-top: 1px solid var(--border);
+    z-index: 199;
+    overflow-y: auto;
+  }
+  .header-nav--open {
+    display: flex;
   }
 
-  .sign-in-btn,
-  .sign-up-btn {
-    padding: 8px 14px;
-    font-size: 13px;
+  .header-nav-link {
+    padding: 13px 16px;
+    font-size: 15px;
+    border-radius: var(--radius-md);
   }
+
+  .header-nav-sep {
+    width: 100%;
+    height: 1px;
+    margin: 6px 0;
+  }
+
+  .header-auth-btn {
+    width: 100% !important;
+    justify-content: center;
+    padding: 13px 16px !important;
+    font-size: 15px;
+  }
+
+  .header-menu-btn { display: flex; }
+  .header-logo-sub { display: none; }
 }
 
-@media (max-width: 480px) {
-  .header {
-    padding: 10px 12px;
-  }
-
-  .logo {
-    gap: 8px;
-  }
-
-  .logo-text h1 {
-    font-size: 14px;
-  }
-
-  /* Hide Sign In on very small screens — keep only Get Started */
-  .sign-in-btn {
-    display: none;
-  }
-
-  .sign-up-btn {
-    padding: 7px 12px;
-    font-size: 13px;
-  }
-}

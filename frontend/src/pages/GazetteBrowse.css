@@ -17,7 +17,7 @@
 .nav-btn {
   padding: 10px 20px;
   background: white;
-  color: var(--text-dark);
+  color: var(--text-primary);
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-weight: 500;
@@ -27,9 +27,9 @@
 }
 
 .nav-btn:hover {
-  background: var(--light-blue);
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
+  background: var(--brand-50);
+  border-color: var(--brand-600);
+  color: var(--brand-600);
 }
 
 .upload-btn-nav {
@@ -84,7 +84,7 @@
   border: none;
   font-size: 16px;
   outline: none;
-  color: var(--text-dark);
+  color: var(--text-primary);
 }
 
 .gazette-search button {
@@ -126,7 +126,7 @@
 }
 
 .filter-group select option {
-  color: var(--text-dark);
+  color: var(--text-primary);
   background: white;
 }
 
@@ -144,7 +144,7 @@
 .content-header h2 {
   font-size: 28px;
   font-weight: 700;
-  color: var(--text-dark);
+  color: var(--text-primary);
 }
 
 .header-right {
@@ -155,7 +155,7 @@
 
 .doc-count {
   font-size: 14px;
-  color: var(--text-gray);
+  color: var(--text-secondary);
 }
 
 .loading-state {
@@ -178,7 +178,7 @@
 }
 
 .loading-state p {
-  color: var(--text-gray);
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
@@ -231,7 +231,7 @@
 .doc-title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
   margin-bottom: 12px;
   line-height: 1.4;
 }
@@ -248,12 +248,12 @@
 .doc-number {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
 }
 
 .doc-date {
   font-size: 13px;
-  color: var(--text-gray);
+  color: var(--text-secondary);
 }
 
 .doc-tags {
@@ -299,7 +299,7 @@
   gap: 6px;
   padding: 10px 16px;
   background: white;
-  color: var(--text-dark);
+  color: var(--text-primary);
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
@@ -315,7 +315,7 @@
 
 .doc-footer {
   font-size: 12px;
-  color: var(--text-gray);
+  color: var(--text-secondary);
 }
 
 .empty-state {
@@ -326,13 +326,13 @@
 .empty-state h3 {
   font-size: 24px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-primary);
   margin: 24px 0 12px;
 }
 
 .empty-state p {
   font-size: 16px;
-  color: var(--text-gray);
+  color: var(--text-secondary);
 }
 
 @media (max-width: 768px) {

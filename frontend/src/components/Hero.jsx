@@ -1,49 +1,45 @@
-import { ArrowRight, CheckCircle } from 'lucide-react'
+import { ArrowRight, CheckCircle, Globe } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import './Hero.css'
 
 function Hero() {
   return (
     <section className="hero">
+      {/* decorative blobs */}
+      <div className="hero-blob hero-blob-1" />
+      <div className="hero-blob hero-blob-2" />
+
       <div className="container">
         <div className="hero-content">
           <div className="hero-badge">
-            Supporting SDG 16: Peace, Justice & Strong Institutions
+            <Globe size={13} />
+            Supporting SDG 16 · Peace, Justice &amp; Strong Institutions
           </div>
-          
+
           <h1 className="hero-title">
             Access to Justice,<br />
-            Simplified for All Rwandans
+            <span className="hero-title-accent">Simplified for All Rwandans</span>
           </h1>
-          
+
           <p className="hero-subtitle">
-            Understand your legal rights and know how to report crimes with easy-to-understand 
-            guidance in English and Kinyarwanda.
+            Understand your legal rights and know how to report crimes—in plain language,
+            in English and Kinyarwanda.
           </p>
-          
-          <div className="hero-buttons">
-            <Link to="/signup" className="btn-primary">
+
+          <div className="hero-actions">
+            <Link to="/signup" className="btn btn-hero-primary">
               Get Started Free
-              <ArrowRight size={20} />
+              <ArrowRight size={17} />
             </Link>
-            <Link to="/search" className="btn-secondary">
+            <Link to="/search" className="btn btn-hero-outline">
               Browse Without Account
             </Link>
           </div>
-          
-          <div className="hero-features">
-            <div className="feature-item">
-              <CheckCircle size={20} color="#2563eb" />
-              <span>100% Free Service</span>
-            </div>
-            <div className="feature-item">
-              <CheckCircle size={20} color="#2563eb" />
-              <span>Mobile Friendly</span>
-            </div>
-            <div className="feature-item">
-              <CheckCircle size={20} color="#2563eb" />
-              <span>Bilingual Support</span>
-            </div>
+
+          <div className="hero-pills">
+            <span className="hero-pill"><CheckCircle size={14} />100% Free</span>
+            <span className="hero-pill"><CheckCircle size={14} />Mobile Friendly</span>
+            <span className="hero-pill"><CheckCircle size={14} />Bilingual Support</span>
           </div>
         </div>
       </div>
