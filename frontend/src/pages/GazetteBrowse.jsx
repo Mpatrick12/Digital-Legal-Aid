@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Scale, BookOpen, Search, Download, Calendar, Filter,
@@ -51,6 +51,11 @@ export default function GazetteBrowse() {
 
   const [query, setQuery] = useState('')
   const [liveQuery, setLiveQuery] = useState('')
+  const [showRecent, setShowRecent] = useState(false)
+  const [recentSearches, setRecentSearches] = useState(
+    () => JSON.parse(localStorage.getItem('recentGazetteSearches') || '[]')
+  )
+  const searchInputRef = useRef(null)
   const [filters, setFilters] = useState({ category: '', year: '', language: '', sort: 'newest' })
   const [documents, setDocuments] = useState([])
   const [dbTotal, setDbTotal] = useState(0)
@@ -63,6 +68,18 @@ export default function GazetteBrowse() {
     setUser(userData)
     fetchDocuments()
   }, [filters])
+
+  // Debounce: trigger search 400ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (liveQuery !== query) {
+        setQuery(liveQuery)
+        fetchDocuments(liveQuery)
+        if (liveQuery.trim()) saveRecentSearch(liveQuery.trim())
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [liveQuery])
 
   const fetchDocuments = useCallback(async (q = query) => {
     setLoading(true)
@@ -90,16 +107,34 @@ export default function GazetteBrowse() {
     }
   }, [filters, query])
 
+  const saveRecentSearch = (term) => {
+    if (!term) return
+    const updated = [term, ...recentSearches.filter(r => r !== term)].slice(0, 5)
+    setRecentSearches(updated)
+    localStorage.setItem('recentGazetteSearches', JSON.stringify(updated))
+  }
+
   const handleSearch = (e) => {
     e.preventDefault()
     setQuery(liveQuery)
     fetchDocuments(liveQuery)
+    if (liveQuery.trim()) saveRecentSearch(liveQuery.trim())
+    setShowRecent(false)
   }
 
   const clearSearch = () => {
     setLiveQuery('')
     setQuery('')
     fetchDocuments('')
+    setShowRecent(false)
+  }
+
+  const pickRecent = (term) => {
+    setLiveQuery(term)
+    setQuery(term)
+    fetchDocuments(term)
+    setShowRecent(false)
+    searchInputRef.current?.focus()
   }
 
   const openChatWithQuery = () => {
@@ -143,21 +178,37 @@ export default function GazetteBrowse() {
             </div>
           </div>
 
-          <form onSubmit={handleSearch} className="gazette-search">
-            <Search size={20} color="#6b7280" />
-            <input
-              type="text"
-              placeholder='Search laws… e.g. "theft penalty" or "ubujura" or "Article 165"'
-              value={liveQuery}
-              onChange={(e) => setLiveQuery(e.target.value)}
-            />
-            {liveQuery && (
-              <button type="button" className="search-clear" onClick={clearSearch}>
-                <X size={16} />
-              </button>
+          <div className="gazette-search-wrap">
+            <form onSubmit={handleSearch} className="gazette-search">
+              <Search size={20} color="#6b7280" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder='Search laws… e.g. "theft penalty" or "ubujura" or "Article 165"'
+                value={liveQuery}
+                onChange={(e) => setLiveQuery(e.target.value)}
+                onFocus={() => setShowRecent(true)}
+                onBlur={() => setTimeout(() => setShowRecent(false), 180)}
+                autoComplete="off"
+              />
+              {liveQuery && (
+                <button type="button" className="search-clear" onClick={clearSearch}>
+                  <X size={16} />
+                </button>
+              )}
+              <button type="submit" className="search-submit">Search</button>
+            </form>
+            {showRecent && recentSearches.length > 0 && !liveQuery && (
+              <div className="recent-dropdown">
+                <p className="recent-heading">Recent searches</p>
+                {recentSearches.map(term => (
+                  <button key={term} className="recent-item" onMouseDown={() => pickRecent(term)}>
+                    🕐 {term}
+                  </button>
+                ))}
+              </div>
             )}
-            <button type="submit" className="search-submit">Search</button>
-          </form>
+          </div>
 
           {/* Filter pills */}
           <div className="filter-pills">
