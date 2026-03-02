@@ -5,6 +5,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://digital-legal-aid.onrender.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
