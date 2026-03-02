@@ -72,9 +72,10 @@ app.use('/api/debug', debugRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'Digital Legal Aid API is running',
+    version: '1.1.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   })
