@@ -26,8 +26,9 @@ export default function GazetteDetail() {
     setLoading(true)
     axios.get(`${API_BASE_URL}/api/gazette/${id}`)
       .then(r => {
-        setDoc(r.data)
-        const langs = r.data.languages || ['en']
+        const doc = r.data.data || r.data
+        setDoc(doc)
+        const langs = doc.languages || ['en']
         setActiveLang(langs[0])
       })
       .catch(() => setError('Could not load document.'))
@@ -86,11 +87,14 @@ export default function GazetteDetail() {
   /* ── Text for active language tab ── */
   function langText() {
     if (!doc) return ''
-    if (doc.languages?.includes(activeLang)) {
-      const key = 'content_' + activeLang
-      if (doc[key]) return doc[key]
+    // extractedText is { en, rw, fr } on the model
+    if (doc.extractedText?.[activeLang]) return doc.extractedText[activeLang]
+    // fallback: any language
+    if (doc.extractedText) {
+      const any = doc.extractedText.en || doc.extractedText.rw || doc.extractedText.fr
+      if (any) return any
     }
-    return doc.content || doc.textPreview || ''
+    return doc.textPreview || ''
   }
 
   /* ── Highlight search hits in text ── */
