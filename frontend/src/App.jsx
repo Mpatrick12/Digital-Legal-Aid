@@ -8,6 +8,7 @@ import GazetteUpload from './pages/GazetteUpload'
 import GazetteBrowse from './pages/GazetteBrowse'
 import GazetteDetail from './pages/GazetteDetail'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminLogin from './pages/AdminLogin'
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
 import ChatWidget from './components/ChatWidget'
 import { useLanguage } from './context/LanguageContext.jsx'
@@ -23,6 +24,7 @@ function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/signin" element={<SignIn />} />
+      <Route path="/admin" element={<AdminLogin />} />
       <Route 
         path="/dashboard" 
         element={

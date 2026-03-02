@@ -101,4 +101,35 @@ router.post('/signin', [
   }
 })
 
+// Admin Login — separate credentials stored in .env
+router.post('/admin-login', async (req, res) => {
+  try {
+    const { username, password } = req.body
+    const validUsername = process.env.ADMIN_USERNAME || 'admin'
+    const validPassword = process.env.ADMIN_PASSWORD || 'admin123'
+
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' })
+    }
+
+    if (username !== validUsername || password !== validPassword) {
+      return res.status(401).json({ message: 'Invalid admin credentials' })
+    }
+
+    const token = jwt.sign(
+      { userId: 'admin', role: 'admin', username },
+      process.env.JWT_SECRET,
+      { expiresIn: '12h' }
+    )
+
+    res.json({
+      token,
+      user: { id: 'admin', name: 'Administrator', role: 'admin', username }
+    })
+  } catch (error) {
+    console.error('Admin login error:', error)
+    res.status(500).json({ message: 'Login failed' })
+  }
+})
+
 export default router
