@@ -39,6 +39,14 @@ const legalContentSchema = new mongoose.Schema({
   }],
   tags: [String],
   keywords: [String],
+  sourceDocument: {
+    type: String,
+    default: 'Penal Code 2018'
+  },
+  relevantForCitizens: {
+    type: Boolean,
+    default: true
+  },
   viewCount: {
     type: Number,
     default: 0
@@ -54,7 +62,8 @@ legalContentSchema.index({
   'originalText.rw': 'text',
   'simplifiedExplanation.en': 'text',
   'simplifiedExplanation.rw': 'text',
-  tags: 'text'
+  tags: 'text',
+  sourceDocument: 'text'
 })
 
 export default mongoose.model('LegalContent', legalContentSchema)

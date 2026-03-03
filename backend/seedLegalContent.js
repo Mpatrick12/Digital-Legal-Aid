@@ -57,10 +57,19 @@ async function seed() {
   }
 
   const raw = fs.readFileSync(PARSED_LAWS_PATH, 'utf8')
-  const { metadata, articles } = JSON.parse(raw)
+  const parsed = JSON.parse(raw)
 
-  console.log(`📋 Source: ${metadata.source}`)
+  // Support both old format { metadata, articles } and new combined format
+  const articles = Array.isArray(parsed) ? parsed : parsed.articles
+  const metadata = parsed.metadata || { source: 'unknown', parsed_at: new Date().toISOString() }
+
   console.log(`📋 Parsed at: ${metadata.parsed_at}`)
+  if (metadata.documents) {
+    console.log(`📋 Documents included:`)
+    metadata.documents.forEach(d => console.log(`     • ${d.type}: ${d.articles} articles`))
+  } else {
+    console.log(`📋 Source: ${metadata.source}`)
+  }
   console.log(`📋 Total articles to seed: ${articles.length}\n`)
 
   // Optionally clear existing data
@@ -79,6 +88,8 @@ async function seed() {
   const documents = articles.map(article => ({
     crimeType: VALID_CRIME_TYPES.has(article.crime_type) ? article.crime_type : 'Other',
     articleNumber: article.article_number,
+    sourceDocument: article.source_document || metadata.source || 'Penal Code 2018',
+    relevantForCitizens: true,
     originalText: {
       en: article.english_text,
       rw: article.kinyarwanda_text || ''
@@ -91,31 +102,42 @@ async function seed() {
     },
     reportingSteps: article.reporting_steps.map(step => ({
       stepNumber: step.step_number,
-      description: {
-        en: step.description,
-        rw: step.description  // Will be updated with proper translations later
-      }
+      description: { en: step.description, rw: step.description }
     })),
     requiredEvidence: article.required_evidence.map(evidence => ({
-      en: evidence,
-      rw: evidence  // Will be updated with proper translations later
+      en: evidence, rw: evidence
     })),
     whereToReport: {
       en: article.where_to_report,
-      rw: article.where_to_report  // Will be updated with proper translations later
+      rw: article.where_to_report
     },
     tags: article.keywords || [],
     keywords: article.keywords || [],
     viewCount: 0
   }))
 
-  // Use bulkWrite with ordered:false for fast upserts — skips duplicates automatically
+  // Deduplicate: same (articleNumber + sourceDocument) → keep the one with longest text
+  const deduped = new Map()
+  for (const doc of documents) {
+    const key = `${doc.sourceDocument}::${doc.articleNumber}`
+    const existing = deduped.get(key)
+    const len = (doc.originalText.en || '').length
+    const existingLen = existing ? (existing.originalText.en || '').length : 0
+    if (!existing || len > existingLen) {
+      deduped.set(key, doc)
+    }
+  }
+  const uniqueDocs = [...deduped.values()]
+  console.log(`📋 After deduplication: ${uniqueDocs.length} unique articles (removed ${documents.length - uniqueDocs.length} duplicates)\n`)
+
+  // Use bulkWrite with ordered:false for fast upserts
+  // Key on (articleNumber + sourceDocument) so same article numbers from different laws don't overwrite
   console.log('⏳ Inserting into MongoDB (bulk upsert)...')
 
-  const ops = documents.map(doc => ({
+  const ops = uniqueDocs.map(doc => ({
     updateOne: {
-      filter: { articleNumber: doc.articleNumber },
-      update: { $setOnInsert: doc },
+      filter: { articleNumber: doc.articleNumber, sourceDocument: doc.sourceDocument },
+      update: { $set: doc },
       upsert: true
     }
   }))
@@ -123,11 +145,17 @@ async function seed() {
   const result = await LegalContent.bulkWrite(ops, { ordered: false })
 
   const inserted = result.upsertedCount
-  const skipped = documents.length - inserted
+  const updated  = result.modifiedCount
 
-  console.log('📊 Seeding results:')
+  console.log('\n📊 Seeding results:')
   console.log(`   ✅ Inserted: ${inserted} new articles`)
-  console.log(`   ⏭️  Skipped (already exist): ${skipped} articles`)
+  console.log(`   🔄 Updated:  ${updated} existing articles`)
+
+  // Per-document breakdown
+  const bySource = {}
+  uniqueDocs.forEach(d => { bySource[d.sourceDocument] = (bySource[d.sourceDocument] || 0) + 1 })
+  console.log('\n📂 Articles per document in this run:')
+  Object.entries(bySource).forEach(([src, n]) => console.log(`   • ${src.padEnd(35)} ${n}`))
 
   const total = await LegalContent.countDocuments()
   console.log(`\n📦 Total LegalContent documents in DB: ${total}`)

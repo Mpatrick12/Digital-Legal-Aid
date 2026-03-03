@@ -189,7 +189,7 @@ export async function retrieveRelevantArticles(userQuery, topK = 5) {
     )
       .sort({ score: { $meta: 'textScore' } })
       .limit(topK)
-      .select('crimeType articleNumber simplifiedExplanation originalText reportingSteps requiredEvidence whereToReport tags keywords')
+      .select('crimeType articleNumber sourceDocument simplifiedExplanation originalText reportingSteps requiredEvidence whereToReport tags keywords')
       .lean()
 
     if (textResults.length > 0) {
@@ -209,7 +209,7 @@ export async function retrieveRelevantArticles(userQuery, topK = 5) {
 
     const fallbackResults = await LegalContent.find({ $and: regexOr })
       .limit(topK)
-      .select('crimeType articleNumber simplifiedExplanation originalText reportingSteps requiredEvidence whereToReport tags keywords')
+      .select('crimeType articleNumber sourceDocument simplifiedExplanation originalText reportingSteps requiredEvidence whereToReport tags keywords')
       .lean()
 
     logger.info('RAG fallback regex search', { count: fallbackResults.length })
@@ -325,7 +325,7 @@ export async function generateLegalResponse(
 
         return `
 [LEGAL ARTICLE ${i + 1}]
-Reference: ${article.articleNumber} | Crime Type: ${article.crimeType}
+Reference: ${article.articleNumber} | Source: ${article.sourceDocument || 'Rwandan Law'} | Crime Type: ${article.crimeType}
 ${lawText ? `Exact Law Text: "${lawText}"` : ''}
 ${explanation ? `Plain Explanation: ${explanation}` : ''}
 ${steps ? `Reporting Steps:\n${steps}` : ''}
