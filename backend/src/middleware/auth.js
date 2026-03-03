@@ -12,7 +12,13 @@ export const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     req.userId = decoded.userId
     req.userRole = decoded.role
-    
+
+    // Virtual admin — not stored in DB
+    if (decoded.userId === 'admin' && decoded.role === 'admin') {
+      req.user = { _id: 'admin', role: 'admin', name: 'Administrator', username: decoded.username }
+      return next()
+    }
+
     // Optionally fetch full user object
     const user = await User.findById(decoded.userId).select('-password')
     if (!user) {
