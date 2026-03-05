@@ -327,7 +327,7 @@ function SearchPage() {
                     })}
                   </div>
                 </>
-              ) : !searchError ? (
+              ) : !searchError && !aiAnswer ? (
                 <div className="no-results">
                   <FileText size={48} color="#9ca3af" />
                   <h3>No results found</h3>
