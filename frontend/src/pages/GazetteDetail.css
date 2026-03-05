@@ -238,3 +238,38 @@ mark.inline-mark {
   padding: .5rem 1.2rem; border-radius: 8px;
   background: #2563eb; color: #fff; border: none; cursor: pointer;
 }
+
+/* Article header left (badge + crime type) */
+.article-header-left { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.crime-badge {
+  display: inline-block; border-radius: 5px;
+  padding: .14rem .55rem; font-size: .7rem; font-weight: 700;
+  letter-spacing: .03em;
+}
+
+/* Articles loading */
+.articles-loading {
+  display: flex; align-items: center; gap: .75rem;
+  padding: 2rem; color: #64748b; font-size: .9rem;
+}
+
+/* Plain language explanation */
+.simplified-wrap {
+  margin-top: .85rem; background: #f0fdf4;
+  border: 1px solid #bbf7d0; border-radius: 8px; padding: .6rem 1rem;
+}
+.simplified-wrap summary {
+  font-size: .8rem; font-weight: 600; color: #15803d; cursor: pointer;
+}
+.simplified-text {
+  font-size: .84rem; color: #166534; line-height: 1.65;
+  margin: .5rem 0 0;
+}
+
+/* TOC badges */
+.toc-badge {
+  display: inline-block; border-radius: 4px;
+  padding: .1rem .4rem; font-size: .65rem; font-weight: 700;
+  margin-left: auto; white-space: nowrap;
+}
+.toc-loading { font-size: .8rem; color: #94a3b8; padding: .5rem 0; }

@@ -59,6 +59,8 @@ const gazetteDocumentSchema = new mongoose.Schema({
   fileSize: Number,
   pageCount: Number,
   tags: [String],
+  description: String,        // human-readable purpose of this law
+  sourceDocument: String,     // matches LegalContent.sourceDocument e.g. 'Penal Code 2018'
   relatedLaws: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'LegalContent'

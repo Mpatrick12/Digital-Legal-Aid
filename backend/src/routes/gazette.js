@@ -4,6 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import pdf from 'pdf-parse'
 import GazetteDocument from '../models/GazetteDocument.js'
+import LegalContent    from '../models/LegalContent.js'
 import { authenticate, authorize } from '../middleware/auth.js'
 import { 
   gazetteUploadValidation, 
@@ -244,6 +245,108 @@ router.post('/upload',
   })
 )
 
+// ── Article-level search across all laws ─────────────────────────────────────
+// GET /api/gazette/articles/search?q=theft+penalty
+// Returns articles from LegalContent grouped by source document
+router.get('/articles/search', catchAsync(async (req, res) => {
+  const { q } = req.query
+  if (!q || !q.trim()) {
+    return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
+  }
+
+  const expandedQ = expandQueryWithSynonyms(q.toLowerCase())
+  const terms     = expandedQ.split(/\s+/).filter(Boolean)
+
+  // Build a regex-based OR query across article text and tags
+  const regexParts = terms.map(t => new RegExp(t, 'i'))
+  const articles   = await LegalContent.find({
+    $or: [
+      { 'originalText.en':          { $in: regexParts } },
+      { 'simplifiedExplanation.en': { $in: regexParts } },
+      { tags:                       { $in: regexParts } },
+      { crimeType:                  { $in: regexParts } },
+    ]
+  }).select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument').limit(60)
+
+  if (!articles.length) {
+    return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
+  }
+
+  // Fetch gazette documents to get IDs/titles for each sourceDocument
+  const sourceDocs = [...new Set(articles.map(a => a.sourceDocument))]
+  const gazetteMap = {}
+  const gazettes   = await GazetteDocument.find({ sourceDocument: { $in: sourceDocs } })
+    .select('_id title sourceDocument documentNumber')
+  gazettes.forEach(g => { gazetteMap[g.sourceDocument] = g })
+
+  // Group articles by sourceDocument
+  const groups = {}
+  articles.forEach(a => {
+    const src = a.sourceDocument || 'Unknown'
+    if (!groups[src]) groups[src] = []
+    const text   = a.originalText?.en || ''
+    const snippet = getSnippet(text, q, 250) || text.slice(0, 250)
+    groups[src].push({
+      id:            a._id,
+      articleNumber: a.articleNumber,
+      crimeType:     a.crimeType,
+      title:         `${a.articleNumber} — ${a.crimeType}`,
+      snippet,
+      tags:          a.tags || [],
+    })
+  })
+
+  const result = Object.entries(groups).map(([src, arts]) => {
+    const gazette = gazetteMap[src]
+    return {
+      sourceDocument: src,
+      gazetteId:      gazette?._id || null,
+      gazetteTitle:   gazette?.title || src,
+      gazetteNumber:  gazette?.documentNumber || '',
+      matchingArticles: arts.slice(0, 10),
+      totalMatches:   arts.length,
+    }
+  })
+
+  res.json({
+    status: 'success',
+    data: { totalArticles: articles.length, groups: result }
+  })
+}))
+
+// ── Articles for a specific gazette (from LegalContent by sourceDocument) ─────
+// GET /api/gazette/:id/articles
+router.get('/:id/articles', mongoIdValidation, catchAsync(async (req, res) => {
+  const gazette = await GazetteDocument.findById(req.params.id).select('sourceDocument title')
+  if (!gazette) throw new AppError('Document not found', 404)
+
+  const articles = await LegalContent
+    .find({ sourceDocument: gazette.sourceDocument })
+    .select('articleNumber crimeType originalText simplifiedExplanation tags keywords')
+    .sort({ articleNumber: 1 })
+
+  const formatted = articles.map(a => ({
+    id:            a._id,
+    number:        a.articleNumber, // keep 'number' key so GazetteDetail doesn't need big changes
+    articleNumber: a.articleNumber,
+    crimeType:     a.crimeType,
+    title:         a.articleNumber,
+    text:          a.originalText?.en || '',
+    simplified:    a.simplifiedExplanation?.en || '',
+    tags:          a.tags || [],
+  }))
+
+  res.json({
+    status:   'success',
+    data: {
+      sourceDocument: gazette.sourceDocument,
+      gazettTitle:    gazette.title,
+      articles:       formatted,
+      total:          formatted.length,
+    }
+  })
+}))
+
 // Search gazette documents (full-text with snippets)
 router.get('/search', gazetteSearchValidation, catchAsync(async (req, res) => {
   const { q, category, year, language, sort = 'relevance', page = 1, limit = 10 } = req.query
@@ -335,8 +438,8 @@ router.get('/:id', mongoIdValidation, catchAsync(async (req, res) => {
       pdfUrl: document.pdfUrl,
       downloadCount: document.downloadCount,
       viewCount: document.viewCount,
-      searchCount: document.searchCount
-    }
+      searchCount: document.searchCount      description: document.description,
+      sourceDocument: document.sourceDocument,    }
   })
 }))
 

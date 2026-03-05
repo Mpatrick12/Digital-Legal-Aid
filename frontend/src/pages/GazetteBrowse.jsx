@@ -57,11 +57,13 @@ export default function GazetteBrowse() {
   )
   const searchInputRef = useRef(null)
   const [filters, setFilters] = useState({ category: '', year: '', language: '', sort: 'newest' })
-  const [documents, setDocuments] = useState([])
-  const [dbTotal, setDbTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [showFilters, setShowFilters] = useState(false)
-  const [user, setUser] = useState(null)
+  const [documents, setDocuments]         = useState([])
+  const [articleGroups, setArticleGroups] = useState([]) // article-level search results
+  const [totalArticleHits, setTotalArticleHits] = useState(0)
+  const [dbTotal, setDbTotal]             = useState(0)
+  const [loading, setLoading]             = useState(true)
+  const [showFilters, setShowFilters]     = useState(false)
+  const [user, setUser]                   = useState(null)
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('user') || '{}')
@@ -84,6 +86,7 @@ export default function GazetteBrowse() {
   const fetchDocuments = useCallback(async (q = query) => {
     setLoading(true)
     try {
+      // Always load the document list for the library view
       const params = new URLSearchParams()
       if (q) params.append('q', q)
       if (filters.category && filters.category !== 'All') params.append('category', filters.category)
@@ -92,16 +95,27 @@ export default function GazetteBrowse() {
       params.append('sort', filters.sort)
       params.append('limit', '24')
 
-      const endpoint = q ? `/api/gazette/search?${params}` : `/api/gazette?${params}`
-      const res = await axios.get(endpoint)
-      const docs = res.data.data || res.data.results || []
+      const docsRes = await axios.get(`/api/gazette?${params}`)
+      const docs    = docsRes.data.data || docsRes.data.results || []
       setDocuments(docs)
 
-      // Get total count
+      // When there's a query, also do article-level search
+      if (q && q.trim()) {
+        const artRes = await axios.get(`/api/gazette/articles/search?q=${encodeURIComponent(q)}`)
+        const groups = artRes.data.data?.groups || []
+        setArticleGroups(groups)
+        setTotalArticleHits(artRes.data.data?.totalArticles || 0)
+      } else {
+        setArticleGroups([])
+        setTotalArticleHits(0)
+      }
+
+      // Get total gazette count
       const statsRes = await axios.get('/api/debug/stats').catch(() => ({ data: {} }))
       setDbTotal(statsRes.data.totalDocuments || docs.length)
     } catch {
       setDocuments([])
+      setArticleGroups([])
     } finally {
       setLoading(false)
     }
@@ -273,7 +287,9 @@ export default function GazetteBrowse() {
           <div className="content-header">
             <h2>
               {query
-                ? `Results for "${query}" (${documents.length})`
+                ? totalArticleHits > 0
+                  ? `${totalArticleHits} articles found for "${query}"`
+                  : `Results for "${query}" (${documents.length} documents)`
                 : `All Gazettes (${documents.length}${dbTotal > documents.length ? ` of ${dbTotal}` : ''})`
               }
             </h2>
@@ -284,7 +300,53 @@ export default function GazetteBrowse() {
               <div className="spinner" />
               <p>Searching legal library…</p>
             </div>
+
+          ) : query && articleGroups.length > 0 ? (
+            /* ── ARTICLE-LEVEL RESULTS ── */
+            <div className="article-results">
+              {articleGroups.map(group => (
+                <div key={group.sourceDocument} className="article-group">
+                  <div className="group-header">
+                    <BookOpen size={18} color="#2563eb" />
+                    <span className="group-title">{group.gazetteTitle}</span>
+                    <span className="group-num">{group.gazetteNumber}</span>
+                    <span className="group-count">{group.totalMatches} match{group.totalMatches !== 1 ? 'es' : ''}</span>
+                    {group.gazetteId && (
+                      <Link to={`/gazette/${group.gazetteId}`} className="group-view-btn">View Document →</Link>
+                    )}
+                  </div>
+                  <div className="group-articles">
+                    {group.matchingArticles.map(art => (
+                      <div key={art.id} className="article-hit-card">
+                        <div className="art-hit-header">
+                          <span className="art-hit-num">{art.articleNumber}</span>
+                          {art.crimeType && art.crimeType !== 'Other' && (
+                            <span className="art-crime-badge">{art.crimeType}</span>
+                          )}
+                          <button
+                            className="art-ask-ai-btn"
+                            onClick={() => {
+                              const msg = `${art.articleNumber} of "${group.gazetteTitle}" states: "${art.snippet}". What does this mean for an ordinary citizen?`
+                              window.dispatchEvent(new CustomEvent('openChat', { detail: { message: msg, autoSend: true } }))
+                            }}
+                          >🤖 Ask AI &rarr;</button>
+                        </div>
+                        <p className="art-hit-snippet"><Snippet text={art.snippet} term={query} /></p>
+                        {group.gazetteId && (
+                          <Link
+                            to={`/gazette/${group.gazetteId}#${encodeURIComponent(art.articleNumber)}`}
+                            className="art-view-link"
+                          >View full article</Link>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
           ) : documents.length > 0 ? (
+            /* ── DOCUMENT CARDS ── */
             <div className="documents-grid">
               {documents.map((doc) => (
                 <div key={doc.id || doc._id} className="document-card">

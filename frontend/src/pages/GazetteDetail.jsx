@@ -4,15 +4,29 @@ import axios from 'axios'
 import { API_BASE_URL } from '../config'
 import './GazetteDetail.css'
 
+const CRIME_COLORS = {
+  Theft:           '#f59e0b',
+  Assault:         '#ef4444',
+  GBV:             '#ec4899',
+  Fraud:           '#8b5cf6',
+  Murder:          '#dc2626',
+  Drug:            '#10b981',
+  Corruption:      '#f97316',
+  'Property Damage':'#64748b',
+  Other:           '#94a3b8',
+}
+
 const LANG_LABEL = { rw: 'Kinyarwanda', en: 'English', fr: 'Français' }
 
 export default function GazetteDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [doc, setDoc]           = useState(null)
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState(null)
+  const [doc, setDoc]               = useState(null)
+  const [articles, setArticles]     = useState([])      // from LegalContent via /:id/articles
+  const [artLoading, setArtLoading] = useState(false)
+  const [loading, setLoading]       = useState(true)
+  const [error, setError]           = useState(null)
   const [activeLang, setActiveLang] = useState('en')
   const [activeArt, setActiveArt]   = useState(null)
   const [feedback, setFeedback]     = useState(null) // 'yes'|'no'|null
@@ -21,7 +35,7 @@ export default function GazetteDetail() {
   const [hitIdx, setHitIdx]         = useState(0)
   const articleRefs = useRef({})
 
-  /* ── Fetch document ── */
+  /* ── Fetch document metadata ── */
   useEffect(() => {
     setLoading(true)
     axios.get(`${API_BASE_URL}/api/gazette/${id}`)
@@ -33,6 +47,15 @@ export default function GazetteDetail() {
       })
       .catch(() => setError('Could not load document.'))
       .finally(() => setLoading(false))
+  }, [id])
+
+  /* ── Fetch articles from LegalContent ── */
+  useEffect(() => {
+    setArtLoading(true)
+    axios.get(`${API_BASE_URL}/api/gazette/${id}/articles`)
+      .then(r => setArticles(r.data.data?.articles || []))
+      .catch(() => setArticles([]))
+      .finally(() => setArtLoading(false))
   }, [id])
 
   /* ── Auto-highlight first article in viewport ── */
@@ -49,15 +72,15 @@ export default function GazetteDetail() {
 
   /* ── In-doc search ── */
   useEffect(() => {
-    if (!searchTerm || !doc) { setSearchHits([]); return }
+    if (!searchTerm) { setSearchHits([]); return }
     const term = searchTerm.toLowerCase()
-    const hits = (doc.articles || [])
+    const hits = articles
       .filter(a => (a.text || '').toLowerCase().includes(term) || (a.title || '').toLowerCase().includes(term))
       .map(a => a.number)
     setSearchHits(hits)
     setHitIdx(0)
     if (hits.length) scrollToArt(hits[0])
-  }, [searchTerm, doc])
+  }, [searchTerm, articles])
 
   function scrollToArt(num) {
     const el = articleRefs.current[num]
@@ -72,7 +95,7 @@ export default function GazetteDetail() {
 
   /* ── Ask AI ── */
   function askAI(artNum) {
-    const article = doc?.articles?.find(a => String(a.number) === String(artNum))
+    const article = articles.find(a => String(a.number) === String(artNum))
     const artText = article?.text ? article.text.slice(0, 400) : ''
     let msg
     if (artText) {
@@ -127,7 +150,6 @@ export default function GazetteDetail() {
   )
   if (!doc) return null
 
-  const articles = doc.articles || []
   const langs    = doc.languages || ['en']
 
   return (
@@ -194,19 +216,25 @@ export default function GazetteDetail() {
           </div>
 
           {/* Table of contents */}
-          {articles.length > 0 && (
+          {(artLoading || articles.length > 0) && (
             <div className="sidebar-card toc-card">
               <h3 className="toc-heading">Table of Contents</h3>
-              <ul className="toc-list">
-                {articles.map(a => (
-                  <li key={a.number}
-                    className={'toc-item' + (activeArt === String(a.number) ? ' toc-active' : '')}
-                    onClick={() => scrollToArt(a.number)}>
-                    <span className="toc-num">Art. {a.number}</span>
-                    <span className="toc-txt">{a.title || `Article ${a.number}`}</span>
-                  </li>
-                ))}
-              </ul>
+              {artLoading ? (
+                <p className="toc-loading">Loading articles…</p>
+              ) : (
+                <ul className="toc-list">
+                  {articles.map(a => (
+                    <li key={a.number}
+                      className={'toc-item' + (activeArt === String(a.number) ? ' toc-active' : '')}
+                      onClick={() => scrollToArt(a.number)}>
+                      <span className="toc-num">{a.number}</span>
+                      {a.crimeType && a.crimeType !== 'Other' && (
+                        <span className="toc-badge" style={{ background: CRIME_COLORS[a.crimeType] + '22', color: CRIME_COLORS[a.crimeType] }}>{a.crimeType}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </aside>
@@ -228,7 +256,9 @@ export default function GazetteDetail() {
           )}
 
           {/* Article sections */}
-          {articles.length > 0 ? (
+          {artLoading ? (
+            <div className="articles-loading"><div className="spinner-ring" /><p>Loading articles…</p></div>
+          ) : articles.length > 0 ? (
             <div className="articles-list">
               {articles.map(a => (
                 <section
@@ -238,9 +268,14 @@ export default function GazetteDetail() {
                   ref={el => articleRefs.current[a.number] = el}
                 >
                   <div className="article-header">
-                    <div>
-                      <span className="article-badge">Article {a.number}</span>
-                      {a.title && <h3 className="article-title">{a.title}</h3>}
+                    <div className="article-header-left">
+                      <span className="article-badge">{a.number}</span>
+                      {a.crimeType && (
+                        <span
+                          className="crime-badge"
+                          style={{ background: CRIME_COLORS[a.crimeType] + '22', color: CRIME_COLORS[a.crimeType], border: `1px solid ${CRIME_COLORS[a.crimeType]}44` }}
+                        >{a.crimeType}</span>
+                      )}
                     </div>
                     <button className="ask-ai-btn" onClick={() => askAI(a.number)}>
                       🤖 Ask AI
@@ -250,6 +285,12 @@ export default function GazetteDetail() {
                     className="article-body"
                     dangerouslySetInnerHTML={{ __html: highlight(a.text || '') }}
                   />
+                  {a.simplified && (
+                    <details className="simplified-wrap">
+                      <summary>💡 Plain language explanation</summary>
+                      <p className="simplified-text">{a.simplified}</p>
+                    </details>
+                  )}
                 </section>
               ))}
             </div>

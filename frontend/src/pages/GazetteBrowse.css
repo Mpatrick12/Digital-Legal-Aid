@@ -303,3 +303,60 @@ mark.snippet-mark {
   cursor: pointer; transition: background .12s;
 }
 .recent-item:hover { background: #f1f5f9; }
+
+/* ── Article-level search results ─── */
+.article-results { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.article-group {
+  background: #fff; border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  overflow: hidden;
+}
+
+.group-header {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  background: #f8fafc; padding: .85rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.group-title { font-weight: 700; color: #1e3a5f; font-size: .95rem; }
+.group-num   { font-size: .78rem; color: #64748b; }
+.group-count {
+  margin-left: auto; background: #dbeafe; color: #1d4ed8;
+  border-radius: 20px; padding: .18rem .7rem;
+  font-size: .75rem; font-weight: 700;
+}
+.group-view-btn {
+  padding: .3rem .85rem; border-radius: 7px;
+  background: #2563eb; color: #fff; font-size: .78rem;
+  font-weight: 600; text-decoration: none; margin-left: .5rem;
+  transition: opacity .15s;
+}
+.group-view-btn:hover { opacity: .85; }
+
+.group-articles { display: flex; flex-direction: column; }
+
+.article-hit-card {
+  padding: .9rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.article-hit-card:last-child { border-bottom: none; }
+
+.art-hit-header { display: flex; align-items: center; gap: .6rem; margin-bottom: .45rem; flex-wrap: wrap; }
+.art-hit-num    { font-weight: 700; color: #1d4ed8; font-size: .85rem; }
+.art-crime-badge {
+  background: #fef3c7; color: #b45309;
+  border-radius: 5px; padding: .12rem .5rem;
+  font-size: .7rem; font-weight: 700;
+}
+.art-ask-ai-btn {
+  margin-left: auto; padding: .28rem .75rem; border-radius: 7px;
+  background: linear-gradient(135deg,#2563eb,#7c3aed);
+  color: #fff; border: none; cursor: pointer;
+  font-size: .75rem; font-weight: 600; transition: opacity .15s;
+}
+.art-ask-ai-btn:hover { opacity: .85; }
+.art-hit-snippet { font-size: .84rem; color: #475569; line-height: 1.65; margin: 0 0 .35rem; }
+.art-view-link {
+  font-size: .78rem; color: #2563eb; text-decoration: none; font-weight: 600;
+}
+.art-view-link:hover { text-decoration: underline; }
