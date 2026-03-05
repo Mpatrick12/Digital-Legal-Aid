@@ -38,6 +38,7 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
   const [isTyping, setIsTyping] = useState(false)
   const [sessionId, setSessionId] = useState(null)
   const [hasUnread, setHasUnread] = useState(false)
+  const [autoSendMsg, setAutoSendMsg] = useState(null)
 
   // Voice states
   const [isListening, setIsListening] = useState(false)
@@ -63,13 +64,26 @@ export default function ChatWidget({ language: externalLanguage = 'en' }) {
     const handler = (e) => {
       setIsOpen(true)
       if (e.detail?.message) {
-        setInput(e.detail.message)
-        setTimeout(() => inputRef.current?.focus(), 120)
+        if (e.detail?.autoSend) {
+          setAutoSendMsg(e.detail.message)
+        } else {
+          setInput(e.detail.message)
+          setTimeout(() => inputRef.current?.focus(), 120)
+        }
       }
     }
     window.addEventListener('openChat', handler)
     return () => window.removeEventListener('openChat', handler)
   }, [])
+
+  // ── Auto-send pending message once chat is open and not busy ─────────────
+  useEffect(() => {
+    if (autoSendMsg && isOpen && !isTyping) {
+      const msg = autoSendMsg
+      setAutoSendMsg(null)
+      setTimeout(() => dispatchMessage(msg), 400)
+    }
+  }, [autoSendMsg, isOpen, isTyping])
 
   // ── Voice Output ────────────────────────────────────────────────────────────
   const speakText = useCallback(async (text, msgId) => {

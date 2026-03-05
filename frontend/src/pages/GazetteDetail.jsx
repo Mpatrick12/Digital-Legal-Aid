@@ -73,14 +73,14 @@ export default function GazetteDetail() {
   /* ── Ask AI ── */
   function askAI(artNum) {
     const msg = `Can you explain Article ${artNum} of "${doc?.title}" and what it means for ordinary citizens?`
-    window.dispatchEvent(new CustomEvent('openChat', { detail: { message: msg } }))
+    window.dispatchEvent(new CustomEvent('openChat', { detail: { message: msg, autoSend: true } }))
   }
 
   /* ── Feedback ── */
   function sendFeedback(val) {
     setFeedback(val)
     if (val === 'no') {
-      window.dispatchEvent(new CustomEvent('openChat', { detail: { message: `I need help understanding "${doc?.title}"` } }))
+      window.dispatchEvent(new CustomEvent('openChat', { detail: { message: `I need help understanding "${doc?.title}"`, autoSend: true } }))
     }
   }
 

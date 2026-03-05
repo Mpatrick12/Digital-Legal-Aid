@@ -138,7 +138,7 @@ export default function GazetteBrowse() {
   }
 
   const openChatWithQuery = () => {
-    window.dispatchEvent(new CustomEvent('openChat', { detail: { message: liveQuery || query } }))
+    window.dispatchEvent(new CustomEvent('openChat', { detail: { message: liveQuery || query, autoSend: true } }))
   }
 
   const setFilter = (key, val) => setFilters(p => ({ ...p, [key]: val }))
