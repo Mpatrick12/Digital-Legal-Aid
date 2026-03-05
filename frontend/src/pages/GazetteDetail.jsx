@@ -72,7 +72,14 @@ export default function GazetteDetail() {
 
   /* ── Ask AI ── */
   function askAI(artNum) {
-    const msg = `Can you explain Article ${artNum} of "${doc?.title}" and what it means for ordinary citizens?`
+    const article = doc?.articles?.find(a => String(a.number) === String(artNum))
+    const artText = article?.text ? article.text.slice(0, 400) : ''
+    let msg
+    if (artText) {
+      msg = `Article ${artNum} of "${doc?.title}" states: "${artText}". What does this mean for ordinary citizens and what are their rights or obligations?`
+    } else {
+      msg = `Explain the legal rights of a citizen under Article ${artNum} of "${doc?.title}" in Rwanda.`
+    }
     window.dispatchEvent(new CustomEvent('openChat', { detail: { message: msg, autoSend: true } }))
   }
 
@@ -80,7 +87,10 @@ export default function GazetteDetail() {
   function sendFeedback(val) {
     setFeedback(val)
     if (val === 'no') {
-      window.dispatchEvent(new CustomEvent('openChat', { detail: { message: `I need help understanding "${doc?.title}"`, autoSend: true } }))
+      const msg = doc?.title
+        ? `I was reading "${doc.title}" and need help understanding it. Can you explain what it means and how it affects me?`
+        : `I need help understanding this legal document. What are my rights?`
+      window.dispatchEvent(new CustomEvent('openChat', { detail: { message: msg, autoSend: true } }))
     }
   }
 
