@@ -1,4 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { getApiUrl } from './config'
 import LandingPage from './pages/LandingPage'
 import SignUp from './pages/SignUp'
 import SignIn from './pages/SignIn'
@@ -15,8 +17,16 @@ import { useLanguage } from './context/LanguageContext.jsx'
 
 function App() {
   const { language } = useLanguage()
-  useLocation() // triggers re-render on route change so isLoggedIn stays in sync
+  useLocation()
   const isLoggedIn = !!localStorage.getItem('token')
+
+  // Keep Render backend alive — ping every 14 min so it never sleeps
+  useEffect(() => {
+    const ping = () => fetch(getApiUrl('api/health'), { method: 'GET' }).catch(() => {})
+    ping()
+    const id = setInterval(ping, 14 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
 
   return (
     <>
