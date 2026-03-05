@@ -438,8 +438,10 @@ router.get('/:id', mongoIdValidation, catchAsync(async (req, res) => {
       pdfUrl: document.pdfUrl,
       downloadCount: document.downloadCount,
       viewCount: document.viewCount,
-      searchCount: document.searchCount      description: document.description,
-      sourceDocument: document.sourceDocument,    }
+      searchCount: document.searchCount,
+      description: document.description,
+      sourceDocument: document.sourceDocument,
+    }
   })
 }))
 
