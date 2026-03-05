@@ -257,16 +257,22 @@ router.get('/articles/search', catchAsync(async (req, res) => {
   const expandedQ = expandQueryWithSynonyms(q.toLowerCase())
   const terms     = expandedQ.split(/\s+/).filter(Boolean)
 
-  // Build a regex-based OR query across article text and tags
-  const regexParts = terms.map(t => new RegExp(t, 'i'))
-  const articles   = await LegalContent.find({
-    $or: [
-      { 'originalText.en':          { $in: regexParts } },
-      { 'simplifiedExplanation.en': { $in: regexParts } },
-      { tags:                       { $in: regexParts } },
-      { crimeType:                  { $in: regexParts } },
-    ]
-  }).select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument').limit(60)
+  // Each term must match somewhere in the article (AND logic across terms)
+  // For each term, at least one field must contain it
+  const andConditions = terms.map(t => {
+    const re = new RegExp(t, 'i')
+    return {
+      $or: [
+        { 'originalText.en':          re },
+        { 'simplifiedExplanation.en': re },
+        { tags:                       re },
+        { crimeType:                  re },
+      ]
+    }
+  })
+
+  const articles = await LegalContent.find({ $and: andConditions })
+    .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument').limit(60)
 
   if (!articles.length) {
     return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
