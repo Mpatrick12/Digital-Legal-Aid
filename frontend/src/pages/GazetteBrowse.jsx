@@ -7,7 +7,8 @@ import {
 import axios from 'axios'
 import './GazetteBrowse.css'
 
-const CATEGORIES = ['All', 'Law', 'Presidential Order', 'Ministerial Order', 'Prime Minister Order', 'Special Edition', 'Other']const YEARS = Array.from({ length: 26 }, (_, i) => String(2024 - i))
+const CATEGORIES = ['All', 'Law', 'Presidential Order', 'Ministerial Order', 'Prime Minister Order', 'Special Edition', 'Other']
+const YEARS = Array.from({ length: 26 }, (_, i) => String(2024 - i))
 const SORT_OPTIONS = [
   { value: 'newest',    label: 'Newest first' },
   { value: 'relevance', label: 'Most relevant' },
