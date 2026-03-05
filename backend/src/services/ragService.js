@@ -177,10 +177,28 @@ function expandQuery(query) {
  * @param {number} topK       - How many articles to return (default 5)
  * @returns {Array}           - Array of LegalContent documents
  */
+// Score how relevant an article is to the user query (0–1)
+function scoreRelevance(article, query) {
+  const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2)
+  if (!queryWords.length) return 1
+  const haystack = [
+    article.originalText?.en || '',
+    article.simplifiedExplanation?.en || '',
+    (article.keywords || []).join(' '),
+    (article.tags || []).join(' '),
+    article.crimeType || ''
+  ].join(' ').toLowerCase()
+  const matches = queryWords.filter(w => haystack.includes(w)).length
+  return matches / queryWords.length
+}
+
 export async function retrieveRelevantArticles(userQuery, topK = 5) {
   try {
     const expandedQuery = expandQuery(userQuery)
     logger.info('RAG retrieval', { original: userQuery, expanded: expandedQuery })
+
+    // Fetch more candidates so we can filter by relevance
+    const FETCH_K = topK * 3
 
     // Primary: MongoDB full-text search scored by relevance
     const textResults = await LegalContent.find(
@@ -188,13 +206,22 @@ export async function retrieveRelevantArticles(userQuery, topK = 5) {
       { score: { $meta: 'textScore' } }
     )
       .sort({ score: { $meta: 'textScore' } })
-      .limit(topK)
+      .limit(FETCH_K)
       .select('crimeType articleNumber sourceDocument simplifiedExplanation originalText reportingSteps requiredEvidence whereToReport tags keywords')
       .lean()
 
     if (textResults.length > 0) {
-      logger.info('RAG text search found results', { count: textResults.length })
-      return textResults
+      // Filter to minimum 30% relevance, then take topK highest scoring
+      const scored = textResults
+        .map(a => ({ ...a, _relevance: scoreRelevance(a, userQuery) }))
+        .filter(a => a._relevance >= 0.3)
+        .sort((a, b) => b._relevance - a._relevance)
+        .slice(0, topK)
+
+      // If filtering was too aggressive, fall back to top results without filter
+      const final = scored.length > 0 ? scored : textResults.slice(0, topK)
+      logger.info('RAG text search found results', { fetched: textResults.length, afterFilter: final.length })
+      return final
     }
 
     // Fallback: regex search on crimeType and tags if text index returns nothing
@@ -208,12 +235,19 @@ export async function retrieveRelevantArticles(userQuery, topK = 5) {
     }))
 
     const fallbackResults = await LegalContent.find({ $and: regexOr })
-      .limit(topK)
+      .limit(FETCH_K)
       .select('crimeType articleNumber sourceDocument simplifiedExplanation originalText reportingSteps requiredEvidence whereToReport tags keywords')
       .lean()
 
-    logger.info('RAG fallback regex search', { count: fallbackResults.length })
-    return fallbackResults
+    const scoredFallback = fallbackResults
+      .map(a => ({ ...a, _relevance: scoreRelevance(a, userQuery) }))
+      .filter(a => a._relevance >= 0.3)
+      .sort((a, b) => b._relevance - a._relevance)
+      .slice(0, topK)
+
+    const finalFallback = scoredFallback.length > 0 ? scoredFallback : fallbackResults.slice(0, topK)
+    logger.info('RAG fallback regex search', { count: finalFallback.length })
+    return finalFallback
   } catch (error) {
     logger.error('RAG retrieval error', { error: error.message })
     return []
@@ -350,7 +384,7 @@ HOW TO STRUCTURE YOUR RESPONSE:
 1. Start by acknowledging what happened to them in one sentence
 2. Tell them clearly what the law says about their situation — mention the specific article number naturally in the sentence, like "Under Article 167 of the Rwanda Penal Code..."
 3. Tell them exactly what to do RIGHT NOW — be specific and practical
-4. Mention the punishment the offender faces under the cited article — e.g. "Under Article 168, the person who did this can face imprisonment of X years and a fine of X RWF." Only state penalty details that are explicitly mentioned in the legal context below. If no specific penalty is mentioned, say the offence carries serious penalties under Rwandan law.
+4. Mention the punishment the offender faces under the cited article. IMPORTANT: If the user asks about punishment, penalty, sentence, or fine — you MUST state the EXACT imprisonment term (number of years) AND the EXACT fine amount in RWF as written in the legal articles below. Never say vaguely "faces imprisonment" — always give the specific numbers (e.g. "3 to 5 years imprisonment and a fine of 500,000 to 1,000,000 RWF"). If no specific numbers appear in the context, say the offence carries serious penalties under Rwandan law.
 5. Tell them what to bring or prepare
 6. End with the emergency contact: Rwanda National Police: 112
 
