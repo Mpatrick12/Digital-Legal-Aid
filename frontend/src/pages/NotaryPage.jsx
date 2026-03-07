@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Search, MapPin, Phone, Mail, Globe, Clock, Star, ChevronDown, Building2, Briefcase, ArrowLeft, ExternalLink, MessageSquare } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search, MapPin, Phone, Mail, Globe, Clock, Star, ChevronDown, Building2, Briefcase, ArrowLeft } from 'lucide-react'
 import { getApiUrl } from '../config'
 import './NotaryPage.css'
 
@@ -382,10 +382,6 @@ function NotaryModal({ notary: n, mapsUrl, onClose }) {
           <a href={`tel:${n.phone}`} className="modal-btn btn-secondary">
             <Phone size={15} /> Call Now
           </a>
-          <Link to={`/search?q=notary+${encodeURIComponent(n.specializations[0] || '')}`}
-                className="modal-btn btn-ghost" onClick={onClose}>
-            <MessageSquare size={15} /> Ask AI
-          </Link>
         </div>
       </div>
     </div>
