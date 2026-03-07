@@ -40,8 +40,8 @@ export default function NotaryPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed to load notaries')
-      setNotaries(data.data || [])
-      if (data.filters) setFilterOptions(data.filters)
+      setNotaries(data.data?.notaries || [])
+      if (data.data?.filters) setFilterOptions(data.data.filters)
     } catch (err) {
       setError(err.message)
     } finally {
