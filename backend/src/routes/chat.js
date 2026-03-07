@@ -23,7 +23,7 @@ router.post(
     body('message')
       .trim()
       .notEmpty().withMessage('Message is required')
-      .isLength({ max: 500 }).withMessage('Message must be under 500 characters'),
+      .isLength({ max: 1500 }).withMessage('Message must be under 1500 characters'),
     body('language')
       .optional()
       .isIn(['en', 'rw']).withMessage('Language must be en or rw'),

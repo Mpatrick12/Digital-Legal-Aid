@@ -147,12 +147,13 @@ export default function GazetteDetail() {
   /* ── Ask AI ── */
   function askAI(artNum) {
     const article = articles.find(a => String(a.number) === String(artNum))
-    const artText = article?.text ? article.text.slice(0, 400) : ''
+    // artNum is already "Article 16" format — don't prepend "Article" again
+    const artText = article?.text ? article.text.slice(0, 220) : ''
     let msg
     if (artText) {
-      msg = `Article ${artNum} of "${doc?.title}" states: "${artText}". What does this mean for ordinary citizens and what are their rights or obligations?`
+      msg = `${artNum} of "${doc?.title}" states: "${artText}". What does this mean for ordinary citizens and what are their rights or obligations?`
     } else {
-      msg = `Explain the legal rights of a citizen under Article ${artNum} of "${doc?.title}" in Rwanda.`
+      msg = `Explain the legal rights of a citizen under ${artNum} of "${doc?.title}" in Rwanda.`
     }
     window.dispatchEvent(new CustomEvent('openChat', { detail: { message: msg, autoSend: true } }))
   }
