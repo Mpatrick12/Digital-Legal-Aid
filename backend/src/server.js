@@ -20,6 +20,7 @@ import debugRoutes from './routes/debug.js'
 import analyticsRoutes from './routes/analytics.js'
 import chatRoutes from './routes/chat.js'
 import ttsRoutes from './routes/tts.js'
+import notaryRoutes from './routes/notary.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { requestLogger, logger } from './config/logger.js'
 import { apiLimiter } from './middleware/rateLimiter.js'
@@ -68,6 +69,7 @@ app.use('/api/gazette', gazetteRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/chat', chatRoutes)
 app.use('/api/tts', ttsRoutes)
+app.use('/api/notary', notaryRoutes)
 app.use('/api/debug', debugRoutes)
 
 // Health check

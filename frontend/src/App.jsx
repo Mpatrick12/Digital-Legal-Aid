@@ -11,6 +11,7 @@ import GazetteBrowse from './pages/GazetteBrowse'
 import GazetteDetail from './pages/GazetteDetail'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminLogin from './pages/AdminLogin'
+import NotaryPage from './pages/NotaryPage'
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
 import ChatWidget from './components/ChatWidget'
 import { useLanguage } from './context/LanguageContext.jsx'
@@ -81,6 +82,14 @@ function App() {
           <AdminRoute>
             <GazetteUpload />
           </AdminRoute>
+        } 
+      />
+      <Route 
+        path="/notary" 
+        element={
+          <ProtectedRoute>
+            <NotaryPage />
+          </ProtectedRoute>
         } 
       />
     </Routes>

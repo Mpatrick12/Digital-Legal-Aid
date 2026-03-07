@@ -200,14 +200,13 @@ function Dashboard() {
                   <p>{t('dashboard.gazetteDesc', language)}</p>
                 </Link>
 
-                <div className="access-card access-card--soon">
+                <Link to="/notary" className="access-card">
                   <div className="access-icon green">
                     <Building size={24} />
                   </div>
                   <h3>{t('dashboard.notaryCard', language)}</h3>
                   <p>{t('dashboard.notaryDesc', language)}</p>
-                  <span className="coming-soon-badge">Coming Soon</span>
-                </div>
+                </Link>
 
                 <div className="access-card access-card--soon">
                   <div className="access-icon red">
