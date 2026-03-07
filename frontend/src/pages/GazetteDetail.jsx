@@ -53,7 +53,13 @@ export default function GazetteDetail() {
   useEffect(() => {
     setArtLoading(true)
     axios.get(`${API_BASE_URL}/api/gazette/${id}/articles`)
-      .then(r => setArticles(r.data.data?.articles || []))
+      .then(r => {
+        const arts = r.data.data?.articles || []
+        // Ensure numeric sort on frontend too
+        const parseNum = s => parseInt((s || '').replace(/\D/g, ''), 10) || 0
+        arts.sort((a, b) => parseNum(a.number) - parseNum(b.number))
+        setArticles(arts)
+      })
       .catch(() => setArticles([]))
       .finally(() => setArtLoading(false))
   }, [id])

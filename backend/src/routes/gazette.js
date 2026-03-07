@@ -329,7 +329,10 @@ router.get('/:id/articles', mongoIdValidation, catchAsync(async (req, res) => {
   const articles = await LegalContent
     .find({ sourceDocument: gazette.sourceDocument })
     .select('articleNumber crimeType originalText simplifiedExplanation tags keywords')
-    .sort({ articleNumber: 1 })
+
+  // Sort numerically by extracting the number from e.g. "Article 167"
+  const parseNum = s => parseInt((s || '').replace(/\D/g, ''), 10) || 0
+  articles.sort((a, b) => parseNum(a.articleNumber) - parseNum(b.articleNumber))
 
   const formatted = articles.map(a => ({
     id:            a._id,
