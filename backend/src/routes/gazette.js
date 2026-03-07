@@ -426,13 +426,28 @@ router.get('/:id/articles', mongoIdValidation, catchAsync(async (req, res) => {
   const parseNum = s => parseInt((s || '').replace(/\D/g, ''), 10) || 0
   articles.sort((a, b) => parseNum(a.articleNumber) - parseNum(b.articleNumber))
 
-  const formatted = articles.map(a => ({
+  // Filter ToC entries: dotted leaders, commencement, abrogation, or very short articles
+  const isTocEntry = (enText) => {
+    if (!enText) return false
+    const dots = (enText.match(/\.{5,}/g) || []).join('').length
+    if (enText.length > 0 && dots > enText.length * 0.08) return true
+    if (/^\s*[\u2013\-]\s*Commencement/i.test(enText)) return true
+    if (/^\s*[\u2013\-]\s*Abrogat/i.test(enText)) return true
+    const stripped = enText.replace(/[.\s\d\-\u2013ivxIVX]/g, '')
+    if (stripped.length < 25) return true
+    return false
+  }
+
+  const formatted = articles
+    .filter(a => !isTocEntry(a.originalText?.en || ''))
+    .map(a => ({
     id:            a._id,
-    number:        a.articleNumber, // keep 'number' key so GazetteDetail doesn't need big changes
+    number:        a.articleNumber,
     articleNumber: a.articleNumber,
     crimeType:     a.crimeType,
     title:         a.articleNumber,
-    text:          a.originalText?.en || '',
+    // Strip leading dash/en-dash artifacts from PDF extraction
+    text:          (a.originalText?.en || '').replace(/^\s*[\u2013\-]\s*/, ''),
     simplified:    a.simplifiedExplanation?.en || '',
     tags:          a.tags || [],
   }))

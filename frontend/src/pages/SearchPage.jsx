@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Scale, ArrowLeft, FileText, ExternalLink, Bot, ChevronDown, ChevronUp, Volume2, VolumeX } from 'lucide-react'
 import './SearchPage.css'
 
@@ -15,6 +15,15 @@ function SearchPage() {
   const [searchError, setSearchError] = useState(null)
   const [speakingId, setSpeakingId] = useState(null)
   const audioRef = useRef(null)
+  const isLoggedIn = !!localStorage.getItem('token')
+  const [searchParams] = useSearchParams()
+
+  // Auto-run search if navigated with ?q= (e.g., from Dashboard recent activity)
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q) { setQuery(q); runSearch(q) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const stopSpeaking = () => {
     window.speechSynthesis?.cancel()
@@ -58,6 +67,13 @@ function SearchPage() {
     setSearchError(null)
     setAiAnswer(null)
     setAiSources([])
+
+    // Track search in localStorage for Dashboard Recent Activity
+    try {
+      const history = JSON.parse(localStorage.getItem('searchHistory') || '[]')
+      const updated = [{ query: q.trim(), timestamp: Date.now() }, ...history.filter(h => h.query !== q.trim())].slice(0, 8)
+      localStorage.setItem('searchHistory', JSON.stringify(updated))
+    } catch {}
 
     const fetchJson = async (url, opts) => {
       const r = await fetch(url, opts)
@@ -105,9 +121,10 @@ function SearchPage() {
               <Scale size={28} color="#2563eb" />
               <span>Digital Legal Aid</span>
             </Link>
-            <Link to="/signin" className="nav-link">
-              Sign In
-            </Link>
+            {isLoggedIn
+              ? <Link to="/dashboard" className="nav-link">← Dashboard</Link>
+              : <Link to="/signin" className="nav-link">Sign In</Link>
+            }
           </div>
         </div>
       </nav>

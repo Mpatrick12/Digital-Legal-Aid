@@ -17,8 +17,17 @@ function Dashboard() {
   })
   const [activeTab, setActiveTab] = useState('legal-aid')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [recentSearches, setRecentSearches] = useState([])
 
   const closeMenu = () => setMenuOpen(false)
+
+  useEffect(() => {
+    // Load recent searches from localStorage
+    try {
+      const history = JSON.parse(localStorage.getItem('searchHistory') || '[]')
+      setRecentSearches(history)
+    } catch {}
+  }, [])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -216,10 +225,25 @@ function Dashboard() {
                 <Clock size={20} />
                 <h2>{t('dashboard.recentActivity', language)}</h2>
               </div>
-              <div className="activity-content">
-                <Clock size={48} className="empty-icon" />
-                <p>{t('dashboard.noActivity', language)}</p>
-              </div>
+              {recentSearches.length > 0 ? (
+                <ul className="activity-list">
+                  {recentSearches.map((item, i) => (
+                    <li key={i} className="activity-item">
+                      <Link to={`/search?q=${encodeURIComponent(item.query)}`} className="activity-query">
+                        🔍 {item.query}
+                      </Link>
+                      <span className="activity-time">
+                        {new Date(item.timestamp).toLocaleDateString('en-RW', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="activity-content">
+                  <Clock size={48} className="empty-icon" />
+                  <p>{t('dashboard.noActivity', language)}</p>
+                </div>
+              )}
             </div>
           </div>
 
