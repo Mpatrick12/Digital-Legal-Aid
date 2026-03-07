@@ -290,16 +290,36 @@ router.get('/articles/search', catchAsync(async (req, res) => {
 
   let articles = []
 
-  // All meaningful query terms (length > 2, not the crime-type keyword itself)
+  // All meaningful query terms (length > 2)
   const queryTerms = lower.split(/\s+/).filter(t => t.length > 2)
 
-  // Relevance scorer: count how many query terms appear in article text + tags (whole-word boundaries)
+  // Filter out table-of-contents / commencement entries
+  const isTocArticle = (a) => {
+    const enText = a.originalText?.en || ''
+    const rwText = a.originalText?.rw || ''
+    // Check dots only in EN field (RW field can be long and dilute the ratio)
+    const enDots = (enText.match(/\.{5,}/g) || []).join('').length
+    if (enText.length > 0 && enDots > enText.length * 0.08) return true
+    // Commencement / signing articles have no legal content
+    if (/^\s*[\–\-]\s*Commencement/i.test(enText)) return true
+    if (/^\s*[\–\-]\s*Abrogat/i.test(enText)) return true
+    // Very short articles with no legal substance
+    const stripped = enText.replace(/[.\s\d\-–ivxIVX]/g, '')
+    if (stripped.length < 30 && rwText.replace(/[.\s\d\-–]/g, '').length < 50) return true
+    return false
+  }
+
+  // Relevance scorer: term frequency + bonus for penalty/liability mentions
+  const penaltyTerms = /\b(penalty|penalties|liable|liability|imprisonment|fine|sentence|convicted|punish)/i
   const scoreArticle = (a) => {
     const haystack = ((a.originalText?.en || '') + ' ' + (a.originalText?.rw || '') + ' ' + (a.tags || []).join(' ')).toLowerCase()
-    return queryTerms.reduce((sum, t) => {
+    const termScore = queryTerms.reduce((sum, t) => {
       const re = new RegExp(`\\b${t}\\b`, 'gi')
       return sum + (haystack.match(re) || []).length
     }, 0)
+    // Boost articles that mention actual legal consequences
+    const penaltyBonus = penaltyTerms.test(haystack) ? 3 : 0
+    return termScore + penaltyBonus
   }
 
   // Helper: build whole-word regex condition for a term
@@ -312,14 +332,13 @@ router.get('/articles/search', catchAsync(async (req, res) => {
   })
 
   if (detectedCrimeTypes.length > 0) {
-    // PRIMARY path: filter by crimeType only — scoring handles relevance ranking
-    // We don't AND-require query terms in text because e.g. "domestic violence"
-    // should still find GBV articles that say "gender based violence"
+    // PRIMARY path: filter by crimeType — scoring + penalty bonus handles ranking
+    // No AND text requirement so "domestic violence" still finds GBV articles
     articles = await LegalContent.find({ crimeType: { $in: detectedCrimeTypes } })
       .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
       .limit(80)
   } else {
-    // FALLBACK path: no crime type detected — full-text AND search across all terms
+    // FALLBACK path: no crime type detected — full-text AND search
     if (queryTerms.length === 0) return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
 
     const andConditions = queryTerms.map(termCondition)
@@ -332,16 +351,16 @@ router.get('/articles/search', catchAsync(async (req, res) => {
     return res.json({ status: 'success', data: { totalArticles: 0, groups: [], detectedCrimeTypes } })
   }
 
-  // Score and keep only top 5 most relevant articles total
+  // Remove ToC/commencement entries, score remaining, keep top 5
   const scored = articles
+    .filter(a => !isTocArticle(a))
     .map(a => ({ article: a, score: scoreArticle(a) }))
-    .filter(x => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5)
     .map(x => x.article)
 
-  // Fall back to top 5 by article number if scoring returns nothing
-  const topArticles = scored.length > 0 ? scored : articles.slice(0, 5)
+  // Fall back to top 5 by order if nothing scored
+  const topArticles = scored.length > 0 ? scored : articles.filter(a => !isTocArticle(a)).slice(0, 5)
 
   // Fetch gazette documents for grouping
   const sourceDocs = [...new Set(topArticles.map(a => a.sourceDocument))]
