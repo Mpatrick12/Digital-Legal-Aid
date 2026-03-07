@@ -288,8 +288,8 @@ export default function GazetteBrowse() {
             <h2>
               {query
                 ? totalArticleHits > 0
-                  ? `${totalArticleHits} articles found for "${query}"`
-                  : `Results for "${query}" (${documents.length} documents)`
+                  ? `Top ${totalArticleHits} result${totalArticleHits !== 1 ? 's' : ''} for "${query}"`
+                  : `No articles found for "${query}"`
                 : `All Gazettes (${documents.length}${dbTotal > documents.length ? ` of ${dbTotal}` : ''})`
               }
             </h2>
@@ -310,7 +310,7 @@ export default function GazetteBrowse() {
                     <BookOpen size={18} color="#2563eb" />
                     <span className="group-title">{group.gazetteTitle}</span>
                     <span className="group-num">{group.gazetteNumber}</span>
-                    <span className="group-count">{group.totalMatches} match{group.totalMatches !== 1 ? 'es' : ''}</span>
+                    <span className="group-count">{group.totalMatches} most relevant article{group.totalMatches !== 1 ? 's' : ''}</span>
                     {group.gazetteId && (
                       <Link to={`/gazette/${group.gazetteId}`} className="group-view-btn">View Document →</Link>
                     )}

@@ -290,67 +290,86 @@ router.get('/articles/search', catchAsync(async (req, res) => {
 
   let articles = []
 
+  // All meaningful query terms (length > 2, not the crime-type keyword itself)
+  const queryTerms = lower.split(/\s+/).filter(t => t.length > 2)
+
+  // Relevance scorer: count how many query terms appear in article text + tags
+  const scoreArticle = (a) => {
+    const haystack = ((a.originalText?.en || '') + ' ' + (a.tags || []).join(' ')).toLowerCase()
+    return queryTerms.reduce((sum, t) => {
+      const re = new RegExp(t, 'gi')
+      return sum + (haystack.match(re) || []).length
+    }, 0)
+  }
+
   if (detectedCrimeTypes.length > 0) {
-    // PRIMARY path: filter by crimeType — most precise results
-    // Also require extra non-generic terms if present (e.g. "aggravated", "penalty", "child")
-    const genericTerms = new Set(['penalty', 'penalties', 'article', 'law', 'section', 'person', 'liable', 'imprisonment'])
-    const specificTerms = lower.split(/\s+/).filter(t => t.length > 3 && !genericTerms.has(t) && !detectCrimeTypes(t).length)
+    // PRIMARY path: filter by crimeType first (broad), then require ALL query terms to appear
+    const andTextConditions = queryTerms.map(t => ({
+      $or: [
+        { 'originalText.en': new RegExp(t, 'i') },
+        { tags: new RegExp(t, 'i') },
+      ]
+    }))
 
-    let baseQuery = { crimeType: { $in: detectedCrimeTypes } }
-
-    if (specificTerms.length > 0) {
-      // All specific terms must also appear in the article text
-      const andTextConditions = specificTerms.map(t => ({
-        $or: [
-          { 'originalText.en': new RegExp(t, 'i') },
-          { tags: new RegExp(t, 'i') },
-        ]
-      }))
-      baseQuery = { crimeType: { $in: detectedCrimeTypes }, $and: andTextConditions }
-    }
-
-    articles = await LegalContent.find(baseQuery)
+    // Try strict: crime type + all terms present
+    articles = await LegalContent.find({
+      crimeType: { $in: detectedCrimeTypes },
+      $and: andTextConditions
+    })
       .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
-      .limit(80)
+      .limit(50)
 
-    // If no results with specific terms, relax to just crimeType
+    // Relax: drop short/common terms if nothing found
     if (articles.length === 0) {
-      articles = await LegalContent.find({ crimeType: { $in: detectedCrimeTypes } })
+      const keyTerms = queryTerms.filter(t => t.length > 4)
+      const relaxedConditions = keyTerms.map(t => ({
+        $or: [{ 'originalText.en': new RegExp(t, 'i') }, { tags: new RegExp(t, 'i') }]
+      }))
+      const relaxedQuery = keyTerms.length > 0
+        ? { crimeType: { $in: detectedCrimeTypes }, $and: relaxedConditions }
+        : { crimeType: { $in: detectedCrimeTypes } }
+      articles = await LegalContent.find(relaxedQuery)
         .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
-        .limit(80)
+        .limit(50)
     }
   } else {
     // FALLBACK path: no crime type detected — full-text AND search across all terms
-    const terms = lower.split(/\s+/).filter(t => t.length > 2)
-    if (terms.length === 0) return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
+    if (queryTerms.length === 0) return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
 
-    const andConditions = terms.map(t => {
+    const andConditions = queryTerms.map(t => {
       const re = new RegExp(t, 'i')
       return { $or: [{ 'originalText.en': re }, { tags: re }, { crimeType: re }] }
     })
     articles = await LegalContent.find({ $and: andConditions })
       .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
-      .limit(60)
+      .limit(50)
   }
 
   if (!articles.length) {
     return res.json({ status: 'success', data: { totalArticles: 0, groups: [], detectedCrimeTypes } })
   }
 
+  // Score and keep only top 5 most relevant articles total
+  const scored = articles
+    .map(a => ({ article: a, score: scoreArticle(a) }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map(x => x.article)
+
+  // Fall back to top 5 by article number if scoring returns nothing
+  const topArticles = scored.length > 0 ? scored : articles.slice(0, 5)
+
   // Fetch gazette documents for grouping
-  const sourceDocs = [...new Set(articles.map(a => a.sourceDocument))]
+  const sourceDocs = [...new Set(topArticles.map(a => a.sourceDocument))]
   const gazetteMap = {}
   const gazettes   = await GazetteDocument.find({ sourceDocument: { $in: sourceDocs } })
     .select('_id title sourceDocument documentNumber')
   gazettes.forEach(g => { gazetteMap[g.sourceDocument] = g })
 
-  // Sort articles numerically within each group
-  const parseNum = s => parseInt((s || '').replace(/\D/g, ''), 10) || 0
-  articles.sort((a, b) => parseNum(a.articleNumber) - parseNum(b.articleNumber))
-
   // Group by sourceDocument
   const groups = {}
-  articles.forEach(a => {
+  topArticles.forEach(a => {
     const src = a.sourceDocument || 'Unknown'
     if (!groups[src]) groups[src] = []
     const text    = a.originalText?.en || ''
@@ -371,7 +390,7 @@ router.get('/articles/search', catchAsync(async (req, res) => {
       gazetteId:        gazette?._id || null,
       gazetteTitle:     gazette?.title || src,
       gazetteNumber:    gazette?.documentNumber || '',
-      matchingArticles: arts.slice(0, 15),
+      matchingArticles: arts,
       totalMatches:     arts.length,
     }
   })
