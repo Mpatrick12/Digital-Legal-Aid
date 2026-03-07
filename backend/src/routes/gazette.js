@@ -374,13 +374,16 @@ router.get('/articles/search', catchAsync(async (req, res) => {
   topArticles.forEach(a => {
     const src = a.sourceDocument || 'Unknown'
     if (!groups[src]) groups[src] = []
-    // Prefer the text field that actually contains the query term
+    // Always prefer English text if it's substantial; fall back to Kinyarwanda only if EN is missing/short
     const enText = a.originalText?.en || ''
     const rwText = a.originalText?.rw || ''
-    const qRe = new RegExp(`\\b${lower.split(/\s+/)[0]}`, 'i')
-    const text = qRe.test(enText) ? enText : (rwText || enText)
-    const snippet = getSnippet(text, q, 250) || enText.slice(0, 250) || rwText.slice(0, 250)
-    const lang = (text === rwText && rwText) ? 'rw' : 'en'
+    const useEn = enText.length > 80
+    const text = useEn ? enText : (rwText || enText)
+    // Snippet: find the first query term that actually appears in the chosen text so we
+    // show the relevant excerpt rather than the article start (avoids French fallback)
+    const snippetQuery = queryTerms.find(t => new RegExp(`\\b${t}\\b`, 'i').test(text)) || queryTerms[0] || q
+    const snippet = getSnippet(text, snippetQuery, 250) || enText.slice(0, 250) || rwText.slice(0, 250)
+    const lang = (!useEn && rwText) ? 'rw' : 'en'
     groups[src].push({
       id:            a._id,
       articleNumber: a.articleNumber,
