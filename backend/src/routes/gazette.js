@@ -20,31 +20,59 @@ const router = express.Router()
 
 // Synonym mapping for better search results
 const synonymMap = {
-  'theft': ['stolen', 'stole', 'steal', 'thieves', 'thief', 'robbed', 'robbery', 'burglary', 'ubujura'],
-  'assault': ['hit', 'attacked', 'beaten', 'battery', 'violence', 'fight', 'gukubita'],
-  'violence': ['GBV', 'domestic abuse', 'assault', 'ihohoterwa'],
-  'rape': ['sexual assault', 'sexual violence', 'GBV', 'gufata ku ngufu'],
-  'fraud': ['scam', 'deception', 'cheat', 'deceive', 'uburiganya'],
-  'murder': ['killed', 'homicide', 'killing', 'ubwicanyi'],
-  'drug': ['drugs', 'narcotics', 'substance', 'ibiyobyabwenge'],
-  'corruption': ['bribery', 'bribe', 'ruswa'],
-  'property': ['land', 'house', 'building', 'estate', 'umutungo']
+  'theft': ['stolen', 'stole', 'steal', 'thieves', 'thief', 'robbed', 'robbery', 'burglary', 'ubujura', 'taking property'],
+  'assault': ['hit', 'attacked', 'beaten', 'battery', 'fight', 'gukubita', 'bodily harm', 'blessures', 'coups'],
+  'rape': ['sexual assault', 'sexual violence', 'gufata ku ngufu', 'defilement', 'sexual abuse'],
+  'gbv': ['gender based violence', 'domestic violence', 'domestic abuse', 'ihohoterwa', 'conjugal', 'spouse', 'isange'],
+  'fraud': ['scam', 'deception', 'cheat', 'deceive', 'uburiganya', 'false pretence', 'forgery'],
+  'murder': ['killed', 'homicide', 'killing', 'ubwicanyi', 'manslaughter', 'infanticide'],
+  'drug': ['drugs', 'narcotics', 'substance', 'ibiyobyabwenge', 'psychotropic'],
+  'corruption': ['bribery', 'bribe', 'ruswa', 'embezzlement', 'extortion'],
+  'property': ['land', 'house', 'building', 'estate', 'umutungo', 'destruction', 'damage']
+}
+
+// Map query terms → LegalContent crimeType values
+const CRIME_TYPE_MAP = {
+  'theft':       'Theft',
+  'steal':       'Theft', 'stolen': 'Theft', 'robbery': 'Theft', 'burglary': 'Theft', 'ubujura': 'Theft',
+  'assault':     'Assault',
+  'attack':      'Assault', 'beaten': 'Assault', 'bodily harm': 'Assault', 'battery': 'Assault',
+  'rape':        'GBV',
+  'gbv':         'GBV', 'gender':  'GBV', 'violence': 'GBV', 'domestic': 'GBV', 'conjugal': 'GBV', 'sexual': 'GBV', 'defilement': 'GBV',
+  'fraud':       'Fraud',
+  'deception':   'Fraud', 'forgery': 'Fraud', 'scam': 'Fraud', 'uburiganya': 'Fraud',
+  'murder':      'Murder',
+  'kill':        'Murder', 'homicide': 'Murder', 'manslaughter': 'Murder',
+  'drug':        'Drug',
+  'narcotic':    'Drug', 'substance': 'Drug',
+  'corruption':  'Corruption',
+  'brib':        'Corruption', 'embezzl': 'Corruption', 'ruswa': 'Corruption',
+  'property':    'Property Damage',
+  'damage':      'Property Damage', 'destroy': 'Property Damage',
+}
+
+// Detect which crimeType(s) the query is about
+const detectCrimeTypes = (q) => {
+  const lower = q.toLowerCase()
+  const found = new Set()
+  Object.entries(CRIME_TYPE_MAP).forEach(([keyword, crimeType]) => {
+    if (lower.includes(keyword)) found.add(crimeType)
+  })
+  return [...found]
 }
 
 // Expand query with synonyms
 const expandQueryWithSynonyms = (query) => {
   const terms = query.toLowerCase().split(/\s+/)
   const expandedTerms = new Set(terms)
-  
   terms.forEach(term => {
     Object.entries(synonymMap).forEach(([key, synonyms]) => {
-      if (key === term || synonyms.includes(term)) {
+      if (key === term || synonyms.some(s => s === term)) {
         expandedTerms.add(key)
         synonyms.forEach(syn => expandedTerms.add(syn))
       }
     })
   })
-  
   return Array.from(expandedTerms).join(' ')
 }
 
@@ -254,49 +282,83 @@ router.get('/articles/search', catchAsync(async (req, res) => {
     return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
   }
 
-  const expandedQ = expandQueryWithSynonyms(q.toLowerCase())
-  const terms     = expandedQ.split(/\s+/).filter(Boolean)
+  const lower = q.toLowerCase().trim()
 
-  // Each term must match somewhere in the article (AND logic across terms)
-  // For each term, at least one field must contain it
-  const andConditions = terms.map(t => {
-    const re = new RegExp(t, 'i')
-    return {
-      $or: [
-        { 'originalText.en':          re },
-        { 'simplifiedExplanation.en': re },
-        { tags:                       re },
-        { crimeType:                  re },
-      ]
+  // Step 1: detect which crime type(s) the query targets
+  const detectedCrimeTypes = detectCrimeTypes(lower)
+  logger.info('Article search', { q, detectedCrimeTypes })
+
+  let articles = []
+
+  if (detectedCrimeTypes.length > 0) {
+    // PRIMARY path: filter by crimeType — most precise results
+    // Also require extra non-generic terms if present (e.g. "aggravated", "penalty", "child")
+    const genericTerms = new Set(['penalty', 'penalties', 'article', 'law', 'section', 'person', 'liable', 'imprisonment'])
+    const specificTerms = lower.split(/\s+/).filter(t => t.length > 3 && !genericTerms.has(t) && !detectCrimeTypes(t).length)
+
+    let baseQuery = { crimeType: { $in: detectedCrimeTypes } }
+
+    if (specificTerms.length > 0) {
+      // All specific terms must also appear in the article text
+      const andTextConditions = specificTerms.map(t => ({
+        $or: [
+          { 'originalText.en': new RegExp(t, 'i') },
+          { tags: new RegExp(t, 'i') },
+        ]
+      }))
+      baseQuery = { crimeType: { $in: detectedCrimeTypes }, $and: andTextConditions }
     }
-  })
 
-  const articles = await LegalContent.find({ $and: andConditions })
-    .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument').limit(60)
+    articles = await LegalContent.find(baseQuery)
+      .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
+      .limit(80)
 
-  if (!articles.length) {
-    return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
+    // If no results with specific terms, relax to just crimeType
+    if (articles.length === 0) {
+      articles = await LegalContent.find({ crimeType: { $in: detectedCrimeTypes } })
+        .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
+        .limit(80)
+    }
+  } else {
+    // FALLBACK path: no crime type detected — full-text AND search across all terms
+    const terms = lower.split(/\s+/).filter(t => t.length > 2)
+    if (terms.length === 0) return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
+
+    const andConditions = terms.map(t => {
+      const re = new RegExp(t, 'i')
+      return { $or: [{ 'originalText.en': re }, { tags: re }, { crimeType: re }] }
+    })
+    articles = await LegalContent.find({ $and: andConditions })
+      .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
+      .limit(60)
   }
 
-  // Fetch gazette documents to get IDs/titles for each sourceDocument
+  if (!articles.length) {
+    return res.json({ status: 'success', data: { totalArticles: 0, groups: [], detectedCrimeTypes } })
+  }
+
+  // Fetch gazette documents for grouping
   const sourceDocs = [...new Set(articles.map(a => a.sourceDocument))]
   const gazetteMap = {}
   const gazettes   = await GazetteDocument.find({ sourceDocument: { $in: sourceDocs } })
     .select('_id title sourceDocument documentNumber')
   gazettes.forEach(g => { gazetteMap[g.sourceDocument] = g })
 
-  // Group articles by sourceDocument
+  // Sort articles numerically within each group
+  const parseNum = s => parseInt((s || '').replace(/\D/g, ''), 10) || 0
+  articles.sort((a, b) => parseNum(a.articleNumber) - parseNum(b.articleNumber))
+
+  // Group by sourceDocument
   const groups = {}
   articles.forEach(a => {
     const src = a.sourceDocument || 'Unknown'
     if (!groups[src]) groups[src] = []
-    const text   = a.originalText?.en || ''
+    const text    = a.originalText?.en || ''
     const snippet = getSnippet(text, q, 250) || text.slice(0, 250)
     groups[src].push({
       id:            a._id,
       articleNumber: a.articleNumber,
       crimeType:     a.crimeType,
-      title:         `${a.articleNumber} — ${a.crimeType}`,
       snippet,
       tags:          a.tags || [],
     })
@@ -305,18 +367,18 @@ router.get('/articles/search', catchAsync(async (req, res) => {
   const result = Object.entries(groups).map(([src, arts]) => {
     const gazette = gazetteMap[src]
     return {
-      sourceDocument: src,
-      gazetteId:      gazette?._id || null,
-      gazetteTitle:   gazette?.title || src,
-      gazetteNumber:  gazette?.documentNumber || '',
-      matchingArticles: arts.slice(0, 10),
-      totalMatches:   arts.length,
+      sourceDocument:   src,
+      gazetteId:        gazette?._id || null,
+      gazetteTitle:     gazette?.title || src,
+      gazetteNumber:    gazette?.documentNumber || '',
+      matchingArticles: arts.slice(0, 15),
+      totalMatches:     arts.length,
     }
   })
 
   res.json({
     status: 'success',
-    data: { totalArticles: articles.length, groups: result }
+    data: { totalArticles: articles.length, groups: result, detectedCrimeTypes }
   })
 }))
 
