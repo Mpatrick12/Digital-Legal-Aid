@@ -293,47 +293,31 @@ router.get('/articles/search', catchAsync(async (req, res) => {
   // All meaningful query terms (length > 2, not the crime-type keyword itself)
   const queryTerms = lower.split(/\s+/).filter(t => t.length > 2)
 
-  // Relevance scorer: count how many query terms appear in article text + tags (word boundaries)
+  // Relevance scorer: count how many query terms appear in article text + tags (whole-word boundaries)
   const scoreArticle = (a) => {
     const haystack = ((a.originalText?.en || '') + ' ' + (a.originalText?.rw || '') + ' ' + (a.tags || []).join(' ')).toLowerCase()
     return queryTerms.reduce((sum, t) => {
-      const re = new RegExp(`\\b${t}`, 'gi')
+      const re = new RegExp(`\\b${t}\\b`, 'gi')
       return sum + (haystack.match(re) || []).length
     }, 0)
   }
 
-  // Helper: build word-boundary regex condition for a term
+  // Helper: build whole-word regex condition for a term
   const termCondition = (t) => ({
     $or: [
-      { 'originalText.en': new RegExp(`\\b${t}`, 'i') },
+      { 'originalText.en': new RegExp(`\\b${t}\\b`, 'i') },
       { 'originalText.rw': new RegExp(t, 'i') },
       { tags: new RegExp(`^${t}$`, 'i') },
     ]
   })
 
   if (detectedCrimeTypes.length > 0) {
-    // PRIMARY path: filter by crimeType first (broad), then require ALL query terms to appear
-    const andTextConditions = queryTerms.map(termCondition)
-
-    // Try strict: crime type + all terms present
-    articles = await LegalContent.find({
-      crimeType: { $in: detectedCrimeTypes },
-      $and: andTextConditions
-    })
+    // PRIMARY path: filter by crimeType only — scoring handles relevance ranking
+    // We don't AND-require query terms in text because e.g. "domestic violence"
+    // should still find GBV articles that say "gender based violence"
+    articles = await LegalContent.find({ crimeType: { $in: detectedCrimeTypes } })
       .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
-      .limit(50)
-
-    // Relax: drop short/common terms if nothing found
-    if (articles.length === 0) {
-      const keyTerms = queryTerms.filter(t => t.length > 4)
-      const relaxedConditions = keyTerms.map(termCondition)
-      const relaxedQuery = keyTerms.length > 0
-        ? { crimeType: { $in: detectedCrimeTypes }, $and: relaxedConditions }
-        : { crimeType: { $in: detectedCrimeTypes } }
-      articles = await LegalContent.find(relaxedQuery)
-        .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
-        .limit(50)
-    }
+      .limit(80)
   } else {
     // FALLBACK path: no crime type detected — full-text AND search across all terms
     if (queryTerms.length === 0) return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
