@@ -30,11 +30,28 @@ const CAT_COLORS = {
   'Other': '#64748b'
 }
 
+// Clean PDF extraction artifacts: runs of space-separated single chars
+const fixPdfSpacing = (text) => {
+  if (!text) return ''
+  let prev
+  do {
+    prev = text
+    text = text.replace(/\b([a-z] ){2,}[a-z]\b/g, m => m.replace(/ /g, ''))
+    text = text.replace(/\b([a-zA-Z]{1,3}) ([a-zA-Z]{1,3}) ([a-zA-Z]{2,3})\b/g, (m, a, b, c) => {
+      const REAL = new Set(['the','and','for','are','was','not','all','can','but','had','her','his','how','its','our','out','who','will','with','have','this','from','they','been','that','were','said','into','each','than','then','when','them','some','more','also'])
+      const real = [a, b, c].filter(p => REAL.has(p.toLowerCase())).length
+      return real === 0 ? a + b + c : m
+    })
+  } while (prev !== text)
+  return text
+}
+
 // Highlight search term inside a snippet
 function Snippet({ text, term }) {
   if (!text) return null
-  if (!term) return <span>{text}</span>
-  const parts = text.split(new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'))
+  const cleaned = fixPdfSpacing(text)
+  if (!term) return <span>{cleaned}</span>
+  const parts = cleaned.split(new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'))
   return (
     <span>
       {parts.map((p, i) =>
@@ -336,6 +353,7 @@ export default function GazetteBrowse() {
                           <Link
                             to={`/gazette/${group.gazetteId}#${encodeURIComponent(art.articleNumber)}`}
                             className="art-view-link"
+                            state={{ fromSearch: true }}
                           >View full article</Link>
                         )}
                       </div>

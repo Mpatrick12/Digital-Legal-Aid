@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import axios from 'axios'
 import { API_BASE_URL } from '../config'
 import './GazetteDetail.css'
@@ -18,9 +18,29 @@ const CRIME_COLORS = {
 
 const LANG_LABEL = { rw: 'Kinyarwanda', en: 'English', fr: 'Français' }
 
+// Collapse PDF extraction artifacts: runs of 3+ space-separated single chars
+// e.g. "f t c a r r ied" → "ftcarried", "b e tw ee n" → "between"
+const fixPdfSpacing = (text) => {
+  if (!text) return ''
+  let prev
+  do {
+    prev = text
+    // Collapse 3+ consecutive single-char tokens (definitely artifacts)
+    text = text.replace(/\b([a-z] ){2,}[a-z]\b/g, m => m.replace(/ /g, ''))
+    // Collapse 3-token runs of ≤3-char tokens when none are common real words
+    text = text.replace(/\b([a-zA-Z]{1,3}) ([a-zA-Z]{1,3}) ([a-zA-Z]{2,3})\b/g, (m, a, b, c) => {
+      const REAL = new Set(['the','and','for','are','was','not','all','can','but','had','her','his','how','its','our','out','who','will','with','have','this','from','they','been','that','were','said','into','each','than','then','when','them','some','more','also'])
+      const real = [a, b, c].filter(p => REAL.has(p.toLowerCase())).length
+      return real === 0 ? a + b + c : m
+    })
+  } while (prev !== text)
+  return text
+}
+
 export default function GazetteDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [doc, setDoc]               = useState(null)
   const [articles, setArticles]     = useState([])      // from LegalContent via /:id/articles
@@ -63,6 +83,31 @@ export default function GazetteDetail() {
       .catch(() => setArticles([]))
       .finally(() => setArtLoading(false))
   }, [id])
+
+  /* ── Scroll to article from URL hash (#Article%20182) ── */
+  useEffect(() => {
+    if (artLoading || !articles.length) return
+    const hash = decodeURIComponent(location.hash.replace(/^#/, ''))
+    if (!hash) return
+    // articleNumber format is "Article 182" — hash may be full or just "182"
+    const target = articles.find(a =>
+      a.number === hash ||
+      a.number === `Article ${hash}` ||
+      String(a.number).replace(/^Article\s*/i, '') === hash
+    )
+    if (target) {
+      // Slight delay so the DOM has rendered
+      setTimeout(() => {
+        scrollToArt(target.number)
+        // Briefly highlight it
+        const el = articleRefs.current[target.number]
+        if (el) {
+          el.classList.add('hash-highlight')
+          setTimeout(() => el.classList.remove('hash-highlight'), 2500)
+        }
+      }, 200)
+    }
+  }, [articles, artLoading, location.hash])
 
   /* ── Auto-highlight first article in viewport ── */
   useEffect(() => {
@@ -269,6 +314,7 @@ export default function GazetteDetail() {
               {articles.map(a => (
                 <section
                   key={a.number}
+                  id={`art-${String(a.number).replace(/\s+/g, '-').toLowerCase()}`}
                   className={'article-section' + (searchHits.includes(a.number) ? ' search-hit' : '')}
                   data-artnum={a.number}
                   ref={el => articleRefs.current[a.number] = el}
@@ -289,7 +335,7 @@ export default function GazetteDetail() {
                   </div>
                   <div
                     className="article-body"
-                    dangerouslySetInnerHTML={{ __html: highlight(a.text || '') }}
+                    dangerouslySetInnerHTML={{ __html: highlight(fixPdfSpacing(a.text || '')) }}
                   />
                   {a.simplified && (
                     <details className="simplified-wrap">
