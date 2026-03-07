@@ -293,23 +293,27 @@ router.get('/articles/search', catchAsync(async (req, res) => {
   // All meaningful query terms (length > 2, not the crime-type keyword itself)
   const queryTerms = lower.split(/\s+/).filter(t => t.length > 2)
 
-  // Relevance scorer: count how many query terms appear in article text + tags
+  // Relevance scorer: count how many query terms appear in article text + tags (word boundaries)
   const scoreArticle = (a) => {
-    const haystack = ((a.originalText?.en || '') + ' ' + (a.tags || []).join(' ')).toLowerCase()
+    const haystack = ((a.originalText?.en || '') + ' ' + (a.originalText?.rw || '') + ' ' + (a.tags || []).join(' ')).toLowerCase()
     return queryTerms.reduce((sum, t) => {
-      const re = new RegExp(t, 'gi')
+      const re = new RegExp(`\\b${t}`, 'gi')
       return sum + (haystack.match(re) || []).length
     }, 0)
   }
 
+  // Helper: build word-boundary regex condition for a term
+  const termCondition = (t) => ({
+    $or: [
+      { 'originalText.en': new RegExp(`\\b${t}`, 'i') },
+      { 'originalText.rw': new RegExp(t, 'i') },
+      { tags: new RegExp(`^${t}$`, 'i') },
+    ]
+  })
+
   if (detectedCrimeTypes.length > 0) {
     // PRIMARY path: filter by crimeType first (broad), then require ALL query terms to appear
-    const andTextConditions = queryTerms.map(t => ({
-      $or: [
-        { 'originalText.en': new RegExp(t, 'i') },
-        { tags: new RegExp(t, 'i') },
-      ]
-    }))
+    const andTextConditions = queryTerms.map(termCondition)
 
     // Try strict: crime type + all terms present
     articles = await LegalContent.find({
@@ -322,9 +326,7 @@ router.get('/articles/search', catchAsync(async (req, res) => {
     // Relax: drop short/common terms if nothing found
     if (articles.length === 0) {
       const keyTerms = queryTerms.filter(t => t.length > 4)
-      const relaxedConditions = keyTerms.map(t => ({
-        $or: [{ 'originalText.en': new RegExp(t, 'i') }, { tags: new RegExp(t, 'i') }]
-      }))
+      const relaxedConditions = keyTerms.map(termCondition)
       const relaxedQuery = keyTerms.length > 0
         ? { crimeType: { $in: detectedCrimeTypes }, $and: relaxedConditions }
         : { crimeType: { $in: detectedCrimeTypes } }
@@ -336,10 +338,7 @@ router.get('/articles/search', catchAsync(async (req, res) => {
     // FALLBACK path: no crime type detected — full-text AND search across all terms
     if (queryTerms.length === 0) return res.json({ status: 'success', data: { totalArticles: 0, groups: [] } })
 
-    const andConditions = queryTerms.map(t => {
-      const re = new RegExp(t, 'i')
-      return { $or: [{ 'originalText.en': re }, { tags: re }, { crimeType: re }] }
-    })
+    const andConditions = queryTerms.map(termCondition)
     articles = await LegalContent.find({ $and: andConditions })
       .select('articleNumber crimeType originalText simplifiedExplanation tags sourceDocument')
       .limit(50)
@@ -372,13 +371,19 @@ router.get('/articles/search', catchAsync(async (req, res) => {
   topArticles.forEach(a => {
     const src = a.sourceDocument || 'Unknown'
     if (!groups[src]) groups[src] = []
-    const text    = a.originalText?.en || ''
-    const snippet = getSnippet(text, q, 250) || text.slice(0, 250)
+    // Prefer the text field that actually contains the query term
+    const enText = a.originalText?.en || ''
+    const rwText = a.originalText?.rw || ''
+    const qRe = new RegExp(`\\b${lower.split(/\s+/)[0]}`, 'i')
+    const text = qRe.test(enText) ? enText : (rwText || enText)
+    const snippet = getSnippet(text, q, 250) || enText.slice(0, 250) || rwText.slice(0, 250)
+    const lang = (text === rwText && rwText) ? 'rw' : 'en'
     groups[src].push({
       id:            a._id,
       articleNumber: a.articleNumber,
       crimeType:     a.crimeType,
       snippet,
+      lang,
       tags:          a.tags || [],
     })
   })
@@ -397,7 +402,7 @@ router.get('/articles/search', catchAsync(async (req, res) => {
 
   res.json({
     status: 'success',
-    data: { totalArticles: articles.length, groups: result, detectedCrimeTypes }
+    data: { totalArticles: topArticles.length, groups: result, detectedCrimeTypes }
   })
 }))
 
