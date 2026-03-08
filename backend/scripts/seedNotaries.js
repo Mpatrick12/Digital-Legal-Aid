@@ -1,7 +1,8 @@
 /**
- * Seed script — Rwandan Notary Offices
+ * Seed script — Rwandan Private Land Notaries
+ * SOURCE: National Land Authority (NLA) Rwanda — Official List of Approved Private Land Notaries
+ * URL: https://www.lands.rw/fileadmin/user_upload/LANDS/Publications/Archives/Private_land_notaries.pdf
  * Run: node backend/scripts/seedNotaries.js
- * Data is based on publicly registered notarial offices in Rwanda.
  */
 import dotenv from 'dotenv'
 import path from 'path'
@@ -12,463 +13,189 @@ import Notary from '../src/models/Notary.js'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.join(__dirname, '../.env') })
 
-const NOTARIES = [
-  // ── KIGALI CITY — Gasabo ──────────────────────────────────────────────────
-  {
-    name: 'Me. Jean Pierre Habimana',
-    firm: 'Cabinet Notarial Habimana & Associés',
-    province: 'Kigali City', district: 'Gasabo',
-    address: 'KG 7 Ave, Remera, Kigali',
-    phone: '+250 788 301 210',
-    email: 'jp.habimana@notaires.rw',
-    specializations: ['Property', 'Corporate', 'Succession'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–17:30',
-    fees: 'From 20,000 RWF per act',
-    coordinates: { lat: -1.9441, lng: 30.0619 }
-  },
-  {
-    name: 'Me. Marie Claire Uwimana',
-    firm: 'Cabinet Uwimana Notaires',
-    province: 'Kigali City', district: 'Gasabo',
-    address: 'KG 11 Ave, Kimironko, Kigali',
-    phone: '+250 788 412 305',
-    email: 'mc.uwimana@notaires.rw',
-    specializations: ['Family', 'Civil', 'Succession'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 15,000 RWF per act',
-    coordinates: { lat: -1.9304, lng: 30.0946 }
-  },
-  {
-    name: 'Me. Patrick Nkurunziza',
-    firm: 'Nkurunziza Legal & Notarial Services',
-    province: 'Kigali City', district: 'Gasabo',
-    address: 'KG 9 Ave, Gisozi, Kigali',
-    phone: '+250 722 557 891',
-    email: 'p.nkurunziza@notaires.rw',
-    specializations: ['Corporate', 'Commercial', 'Property'],
-    languages: ['Kinyarwanda', 'English', 'French'],
-    workingHours: 'Mon–Sat 8:00–18:00',
-    fees: 'From 25,000 RWF per act',
-    coordinates: { lat: -1.9150, lng: 30.0620 }
-  },
+const districtProvince = {
+  'Gasabo': 'Kigali City', 'Kicukiro': 'Kigali City', 'Nyarugenge': 'Kigali City',
+  'Bugesera': 'Eastern Province', 'Gatsibo': 'Eastern Province', 'Kayonza': 'Eastern Province',
+  'Kirehe': 'Eastern Province', 'Ngoma': 'Eastern Province', 'Nyagatare': 'Eastern Province',
+  'Rwamagana': 'Eastern Province', 'Burera': 'Northern Province', 'Gakenke': 'Northern Province',
+  'Gicumbi': 'Northern Province', 'Musanze': 'Northern Province', 'Rulindo': 'Northern Province',
+  'Gisagara': 'Southern Province', 'Huye': 'Southern Province', 'Kamonyi': 'Southern Province',
+  'Muhanga': 'Southern Province', 'Nyamagabe': 'Southern Province', 'Nyanza': 'Southern Province',
+  'Ruhango': 'Southern Province', 'Karongi': 'Western Province', 'Ngororero': 'Western Province',
+  'Nyabihu': 'Western Province', 'Nyamasheke': 'Western Province', 'Rubavu': 'Western Province',
+  'Rusizi': 'Western Province', 'Rutsiro': 'Western Province',
+}
 
-  // ── KIGALI CITY — Kicukiro ────────────────────────────────────────────────
-  {
-    name: 'Me. Josephine Mukamana',
-    firm: 'Cabinet Notarial Mukamana',
-    province: 'Kigali City', district: 'Kicukiro',
-    address: 'KK 15 Ave, Niboye, Kicukiro',
-    phone: '+250 788 623 740',
-    email: 'j.mukamana@notaires.rw',
-    specializations: ['Property', 'Succession', 'Family'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 15,000 RWF per act',
-    coordinates: { lat: -1.9769, lng: 30.0720 }
-  },
-  {
-    name: 'Me. Emmanuel Ndayisaba',
-    firm: 'Ndayisaba Notarial Office',
-    province: 'Kigali City', district: 'Kicukiro',
-    address: 'KK 5 Road, Kagarama, Kicukiro',
-    phone: '+250 722 841 329',
-    email: 'e.ndayisaba@notaires.rw',
-    specializations: ['Corporate', 'Property', 'Civil'],
-    languages: ['Kinyarwanda', 'English', 'French'],
-    workingHours: 'Mon–Fri 8:30–17:30',
-    fees: 'From 20,000 RWF per act',
-    coordinates: { lat: -1.9820, lng: 30.0682 }
-  },
-
-  // ── KIGALI CITY — Nyarugenge ──────────────────────────────────────────────
-  {
-    name: 'Me. Alphonse Munyankindi',
-    firm: 'Cabinet Notarial du Centre',
-    province: 'Kigali City', district: 'Nyarugenge',
-    address: 'KN 4 Ave, City Centre, Kigali',
-    phone: '+250 788 112 440',
-    email: 'a.munyankindi@notaires.rw',
-    specializations: ['Commercial', 'Corporate', 'Property'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–17:30, Sat 9:00–13:00',
-    fees: 'From 30,000 RWF per act',
-    coordinates: { lat: -1.9500, lng: 30.0588 }
-  },
-  {
-    name: 'Me. Solange Iyamuremye',
-    firm: 'Iyamuremye & Partners Notaires',
-    province: 'Kigali City', district: 'Nyarugenge',
-    address: 'KN 7 Ave, Muhima, Kigali',
-    phone: '+250 788 334 512',
-    email: 's.iyamuremye@notaires.rw',
-    specializations: ['Family', 'Succession', 'Civil', 'Property'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 7:30–17:00',
-    fees: 'From 15,000 RWF per act',
-    coordinates: { lat: -1.9458, lng: 30.0521 }
-  },
-  {
-    name: 'Me. David Rugamba',
-    firm: 'Rugamba Notarial & Legal Centre',
-    province: 'Kigali City', district: 'Nyarugenge',
-    address: 'KN 12 Ave, Nyamirambo, Kigali',
-    phone: '+250 722 990 111',
-    email: 'd.rugamba@notaires.rw',
-    specializations: ['Property', 'Corporate', 'Succession'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–18:00',
-    fees: 'From 20,000 RWF per act',
-    coordinates: { lat: -1.9725, lng: 30.0418 }
-  },
-
-  // ── NORTHERN PROVINCE — Musanze ───────────────────────────────────────────
-  {
-    name: 'Me. Claudine Mukabutera',
-    firm: 'Cabinet Notarial Mukabutera',
-    province: 'Northern Province', district: 'Musanze',
-    address: 'Boulevard de la Paix, Ruhengeri',
-    phone: '+250 788 223 678',
-    email: 'c.mukabutera@notaires.rw',
-    specializations: ['Property', 'Family', 'Succession'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 12,000 RWF per act',
-    coordinates: { lat: -1.4991, lng: 29.6338 }
-  },
-  {
-    name: 'Me. Innocent Habimana',
-    firm: 'Habimana Notaires Musanze',
-    province: 'Northern Province', district: 'Musanze',
-    address: 'Av. Kigali, Centre Musanze',
-    phone: '+250 722 445 001',
-    email: 'i.habimana.mus@notaires.rw',
-    specializations: ['Civil', 'Corporate', 'Property'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -1.5000, lng: 29.6350 }
-  },
-
-  // ── NORTHERN PROVINCE — Gicumbi ───────────────────────────────────────────
-  {
-    name: 'Me. Beatrice Nyiransabimana',
-    firm: 'Cabinet Nyiransabimana',
-    province: 'Northern Province', district: 'Gicumbi',
-    address: 'Centre Byumba, Gicumbi',
-    phone: '+250 788 119 342',
-    email: 'b.nsabimana@notaires.rw',
-    specializations: ['Family', 'Succession', 'Property'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -1.5755, lng: 30.0614 }
-  },
-
-  // ── SOUTHERN PROVINCE — Huye ──────────────────────────────────────────────
-  {
-    name: 'Me. Charles Bizimungu',
-    firm: 'Bizimungu Notarial Office',
-    province: 'Southern Province', district: 'Huye',
-    address: 'Avenue de la Cathédrale, Butare',
-    phone: '+250 788 556 234',
-    email: 'c.bizimungu@notaires.rw',
-    specializations: ['Property', 'Corporate', 'Commercial', 'Succession'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–17:30',
-    fees: 'From 15,000 RWF per act',
-    coordinates: { lat: -2.5967, lng: 29.7422 }
-  },
-  {
-    name: 'Me. Vestine Mukandekezi',
-    firm: 'Cabinet Mukandekezi Huye',
-    province: 'Southern Province', district: 'Huye',
-    address: 'Rue Principale, Butare Centre',
-    phone: '+250 722 876 451',
-    email: 'v.mukandekezi@notaires.rw',
-    specializations: ['Family', 'Civil', 'Succession'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 12,000 RWF per act',
-    coordinates: { lat: -2.5980, lng: 29.7390 }
-  },
-
-  // ── SOUTHERN PROVINCE — Muhanga ───────────────────────────────────────────
-  {
-    name: 'Me. Félix Nzabandora',
-    firm: 'Cabinet Notarial Nzabandora',
-    province: 'Southern Province', district: 'Muhanga',
-    address: 'Gitarama Centre, Muhanga',
-    phone: '+250 788 670 823',
-    email: 'f.nzabandora@notaires.rw',
-    specializations: ['Property', 'Succession', 'Civil'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -2.0785, lng: 29.7540 }
-  },
-  {
-    name: 'Me. Odette Nirere',
-    firm: 'Nirere Notaires Muhanga',
-    province: 'Southern Province', district: 'Muhanga',
-    address: 'Avenue de la Paix, Gitarama',
-    phone: '+250 722 231 905',
-    email: 'o.nirere@notaires.rw',
-    specializations: ['Family', 'Property', 'Commercial'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Sat 8:00–17:00',
-    fees: 'From 12,000 RWF per act',
-    coordinates: { lat: -2.0770, lng: 29.7560 }
-  },
-
-  // ── SOUTHERN PROVINCE — Nyanza ────────────────────────────────────────────
-  {
-    name: 'Me. Théogène Rurangirwa',
-    firm: 'Cabinet Rurangirwa Nyanza',
-    province: 'Southern Province', district: 'Nyanza',
-    address: 'Centre Nyanza, Rue Principale',
-    phone: '+250 788 341 107',
-    email: 't.rurangirwa@notaires.rw',
-    specializations: ['Succession', 'Property', 'Civil'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–16:30',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -2.3490, lng: 29.7435 }
-  },
-
-  // ── EASTERN PROVINCE — Rwamagana ──────────────────────────────────────────
-  {
-    name: 'Me. Laurent Ndagijimana',
-    firm: 'Cabinet Notarial de l\'Est',
-    province: 'Eastern Province', district: 'Rwamagana',
-    address: 'Avenue Principale, Rwamagana Centre',
-    phone: '+250 788 789 012',
-    email: 'l.ndagijimana@notaires.rw',
-    specializations: ['Property', 'Corporate', 'Succession'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–17:30',
-    fees: 'From 15,000 RWF per act',
-    coordinates: { lat: -1.9484, lng: 30.4349 }
-  },
-  {
-    name: 'Me. Agnès Musabyimana',
-    firm: 'Musabyimana Notarial Office',
-    province: 'Eastern Province', district: 'Rwamagana',
-    address: 'Rwamagana, Secteur Munyaga',
-    phone: '+250 722 332 556',
-    email: 'a.musabyimana@notaires.rw',
-    specializations: ['Family', 'Property', 'Civil'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -1.9510, lng: 30.4320 }
-  },
-
-  // ── EASTERN PROVINCE — Nyagatare ──────────────────────────────────────────
-  {
-    name: 'Me. Justin Hakizimana',
-    firm: 'Cabinet Hakizimana Nyagatare',
-    province: 'Eastern Province', district: 'Nyagatare',
-    address: 'Centre Nyagatare, Avenue du Commerce',
-    phone: '+250 788 901 223',
-    email: 'j.hakizimana@notaires.rw',
-    specializations: ['Property', 'Commercial', 'Corporate', 'Succession'],
-    languages: ['Kinyarwanda', 'English', 'French'],
-    workingHours: 'Mon–Fri 7:30–17:30',
-    fees: 'From 12,000 RWF per act',
-    coordinates: { lat: -1.3000, lng: 30.3258 }
-  },
-  {
-    name: 'Me. Immaculée Uwineza',
-    firm: 'Uwineza Notaires',
-    province: 'Eastern Province', district: 'Nyagatare',
-    address: 'Quartier Residentiel, Nyagatare',
-    phone: '+250 722 678 990',
-    email: 'i.uwineza@notaires.rw',
-    specializations: ['Family', 'Succession', 'Civil'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -1.3020, lng: 30.3280 }
-  },
-
-  // ── EASTERN PROVINCE — Kayonza ────────────────────────────────────────────
-  {
-    name: 'Me. Eric Niyonsaba',
-    firm: 'Cabinet Niyonsaba Kayonza',
-    province: 'Eastern Province', district: 'Kayonza',
-    address: 'Centre Kayonza, Rue Centrale',
-    phone: '+250 788 445 667',
-    email: 'e.niyonsaba@notaires.rw',
-    specializations: ['Property', 'Succession', 'Civil'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -2.0093, lng: 30.6418 }
-  },
-
-  // ── WESTERN PROVINCE — Rubavu ─────────────────────────────────────────────
-  {
-    name: 'Me. Célestin Niyomugabo',
-    firm: 'Cabinet Notarial du Lac',
-    province: 'Western Province', district: 'Rubavu',
-    address: 'Boulevard du Lac Kivu, Gisenyi',
-    phone: '+250 788 567 890',
-    email: 'c.niyomugabo@notaires.rw',
-    specializations: ['Property', 'Corporate', 'Commercial'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–18:00, Sat 8:00–13:00',
-    fees: 'From 20,000 RWF per act',
-    coordinates: { lat: -1.6987, lng: 29.2578 }
-  },
-  {
-    name: 'Me. Rose Ingabire',
-    firm: 'Ingabire & Associés Notaires',
-    province: 'Western Province', district: 'Rubavu',
-    address: 'Avenue du Commerce, Gisenyi',
-    phone: '+250 722 123 789',
-    email: 'r.ingabire@notaires.rw',
-    specializations: ['Family', 'Succession', 'Property'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 12,000 RWF per act',
-    coordinates: { lat: -1.7000, lng: 29.2560 }
-  },
-
-  // ── WESTERN PROVINCE — Rusizi ─────────────────────────────────────────────
-  {
-    name: 'Me. Bernard Ntegeyimana',
-    firm: 'Cabinet Notarial Ntegeyimana',
-    province: 'Western Province', district: 'Rusizi',
-    address: 'Avenue Commerciale, Cyangugu',
-    phone: '+250 788 234 556',
-    email: 'b.ntegeyimana@notaires.rw',
-    specializations: ['Property', 'Succession', 'Corporate', 'Commercial'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–17:30',
-    fees: 'From 15,000 RWF per act',
-    coordinates: { lat: -2.4838, lng: 28.9078 }
-  },
-  {
-    name: 'Me. Anastasie Kampire',
-    firm: 'Cabinet Kampire Rusizi',
-    province: 'Western Province', district: 'Rusizi',
-    address: 'Rue de l\'Indépendance, Cyangugu',
-    phone: '+250 722 776 344',
-    email: 'a.kampire@notaires.rw',
-    specializations: ['Family', 'Civil', 'Succession'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 12,000 RWF per act',
-    coordinates: { lat: -2.4850, lng: 28.9055 }
-  },
-
-  // ── WESTERN PROVINCE — Karongi ────────────────────────────────────────────
-  {
-    name: 'Me. Gervais Mugisha',
-    firm: 'Mugisha Notaires Karongi',
-    province: 'Western Province', district: 'Karongi',
-    address: 'Centre Kibuye, Lac Kivu',
-    phone: '+250 788 990 112',
-    email: 'g.mugisha@notaires.rw',
-    specializations: ['Property', 'Succession', 'Family'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -2.0597, lng: 29.3480 }
-  },
-
-  // ── WESTERN PROVINCE — Ngororero ──────────────────────────────────────────
-  {
-    name: 'Me. Françoise Umurerwa',
-    firm: 'Cabinet Umurerwa Ngororero',
-    province: 'Western Province', district: 'Ngororero',
-    address: 'Centre Ngororero',
-    phone: '+250 722 334 117',
-    email: 'f.umurerwa@notaires.rw',
-    specializations: ['Civil', 'Succession', 'Property'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–16:30',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -1.8850, lng: 29.5320 }
-  },
-
-  // ── SOUTHERN PROVINCE — Gisagara ──────────────────────────────────────────
-  {
-    name: 'Me. Théophile Nkusi',
-    firm: 'Cabinet Nkusi Gisagara',
-    province: 'Southern Province', district: 'Gisagara',
-    address: 'Centre Gisagara, Avenue Principale',
-    phone: '+250 788 112 990',
-    email: 't.nkusi@notaires.rw',
-    specializations: ['Property', 'Succession', 'Family'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -2.6310, lng: 29.8200 }
-  },
-
-  // ── NORTHERN PROVINCE — Rulindo ───────────────────────────────────────────
-  {
-    name: 'Me. Adéline Mukagasana',
-    firm: 'Cabinet Mukagasana Rulindo',
-    province: 'Northern Province', district: 'Rulindo',
-    address: 'Centre Rulindo, Base',
-    phone: '+250 722 558 340',
-    email: 'a.mukagasana@notaires.rw',
-    specializations: ['Civil', 'Property', 'Succession'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -1.7220, lng: 29.9600 }
-  },
-
-  // ── EASTERN PROVINCE — Bugesera ───────────────────────────────────────────
-  {
-    name: 'Me. Simon Nzeyimana',
-    firm: 'Nzeyimana Notarial Services',
-    province: 'Eastern Province', district: 'Bugesera',
-    address: 'Centre Nyamata, Bugesera',
-    phone: '+250 788 678 231',
-    email: 's.nzeyimana@notaires.rw',
-    specializations: ['Property', 'Family', 'Succession'],
-    languages: ['Kinyarwanda', 'French', 'English'],
-    workingHours: 'Mon–Fri 8:00–17:00',
-    fees: 'From 12,000 RWF per act',
-    coordinates: { lat: -2.2130, lng: 30.1030 }
-  },
-
-  // ── NORTHERN PROVINCE — Burera ────────────────────────────────────────────
-  {
-    name: 'Me. Philomène Nyirandagijimana',
-    firm: 'Cabinet Nyirandagijimana Burera',
-    province: 'Northern Province', district: 'Burera',
-    address: 'Centre Cyanika, Burera',
-    phone: '+250 722 441 908',
-    email: 'p.nyirandagijimana@notaires.rw',
-    specializations: ['Succession', 'Property', 'Family'],
-    languages: ['Kinyarwanda', 'French'],
-    workingHours: 'Mon–Fri 8:00–16:30',
-    fees: 'From 10,000 RWF per act',
-    coordinates: { lat: -1.3725, lng: 29.8350 }
-  }
+const RAW = [
+  { name: 'ABASA Fazili',               phone: '783000612', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'AKAMIKAZI Sifa',             phone: '788863398', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'AMANI Jean de Dieu',         phone: '788662267', district: 'Nyarugenge', sector: 'Kimisagara' },
+  { name: "BAGABO Jean D'Amour",        phone: '788481676', district: 'Kicukiro',   sector: 'Gahanga' },
+  { name: 'BAGINA SAFARI Theophile',    phone: '788759645', district: 'Nyarugenge', sector: 'Kimisagara' },
+  { name: 'BAGOROZI Felix',             phone: '788467243', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'BAZIRUWIHA Jean Claude',     phone: '788758620', district: 'Musanze',    sector: 'Muhoza' },
+  { name: 'BIGIRINKA Emmanuel',         phone: '783814501', district: 'Musanze',    sector: 'Muhoza' },
+  { name: 'BIZIMANA Jean Paul',         phone: '788623697', district: 'Bugesera',   sector: 'Nyamata' },
+  { name: 'BUGIRIMFURA Gilbert',        phone: '788894251', district: 'Rubavu',     sector: 'Gisenyi' },
+  { name: 'CYIZA Clement',              phone: '788300716', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'FATIKARAMU Jean Pierre',     phone: '788305140', district: 'Kicukiro',   sector: 'Gikondo' },
+  { name: 'GAKUNZI David',              phone: '788595826', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'GASANA Jean Baptiste',       phone: '788758635', district: 'Rwamagana',  sector: 'Kigabiro' },
+  { name: 'GASENGAYIRE Alice',          phone: '788475654', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'GASHUMBA Nadia',             phone: '788405438', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'GATERA KANISA Evariste',     phone: '788826765', district: 'Kicukiro',   sector: 'Masaka' },
+  { name: 'HABIMANA Adolphe',           phone: '788565026', district: 'Kamonyi',    sector: 'Runda' },
+  { name: 'HABIYAMBERE Aphrodis',       phone: '788406974', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'HAKIZIMANA Aloys',           phone: '785381936', district: 'Muhanga',    sector: 'Nyamabuye' },
+  { name: 'HAKIZIMANA Emile',           phone: '788408618', district: 'Kamonyi',    sector: 'Runda' },
+  { name: 'HATEGEKIMANA Gratien',       phone: '788419315', district: 'Nyarugenge', sector: 'Nyamirambo' },
+  { name: 'HATEGIKIMANA Valens',        phone: '788606895', district: 'Kicukiro',   sector: 'Kagarama' },
+  { name: "HORANIMANA Jeanne d'Arc",    phone: '782596017', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'IMANIRAKIZA Issa Naphtal',   phone: '787913711', district: 'Rubavu',     sector: 'Gisenyi' },
+  { name: 'INGABIRE Marie Claire',      phone: '788602164', district: 'Gasabo',     sector: 'Kacyiru' },
+  { name: 'IYAMUREMYE Alexis',          phone: '782064980', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'IZERE IRADUKUNDA Germain',   phone: '783061014', district: 'Musanze',    sector: 'Muhoza' },
+  { name: 'KABAMI SEMUCYO Marie Claire',phone: '788628094', district: 'Rubavu',     sector: 'Gisenyi' },
+  { name: 'KAGORORA RUBASHA Apollinaire',phone:'788518058', district: 'Musanze',    sector: 'Muhoza' },
+  { name: 'KAMAYUMUGISHA Pierrette',    phone: '788440601', district: 'Kicukiro',   sector: 'Niboye' },
+  { name: 'KAMPIRE Celine',             phone: '788527756', district: 'Nyarugenge', sector: 'Kimisagara' },
+  { name: 'KAREGEYA Marie Ange',        phone: '788852750', district: 'Gasabo',     sector: 'Gisozi' },
+  { name: 'KAREKEZI Jean',              phone: '783333363', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'KAREMERA Thacien',           phone: '788690186', district: 'Bugesera',   sector: 'Nyamata' },
+  { name: 'KAYIJAMAHE Andrew',          phone: '788791299', district: 'Nyagatare',  sector: 'Nyagatare' },
+  { name: 'KAYUMBA Gratien',            phone: '788823079', district: 'Gatsibo',    sector: 'Kabarore' },
+  { name: 'KIMANUKA John',              phone: '788833951', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'MATATA SEGIKWIYE Sylvestre', phone: '788307015', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'MBANGUTSI Jean Claude',      phone: '788711138', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'MPAYIMANA Jean de Dieu',     phone: '782109106', district: 'Nyarugenge', sector: 'Kimisagara' },
+  { name: 'MUDAGIRI Alexis',            phone: '788266002', district: 'Bugesera',   sector: 'Nyamata' },
+  { name: 'MUDAGIRI Olivier',           phone: '788641393', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'MUDENGE Nicole',             phone: '788601495', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'MUGABEKAZI Gloria',          phone: '788680850', district: 'Kicukiro',   sector: 'Kicukiro' },
+  { name: 'MUGABO Leandre Martin',      phone: '788768332', district: 'Muhanga',    sector: 'Nyamabuye' },
+  { name: 'MUGEMANYI Vedaste',          phone: '788559143', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'MUGIRASE Marie Amabilis',    phone: '788308741', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'MUGWANEZA GATERA Jean Claude',phone:'788487335', district: 'Muhanga',    sector: 'Nyamabuye' },
+  { name: 'MUHAWENIMANA Jeanne',        phone: '783469811', district: 'Kicukiro',   sector: 'Kanombe' },
+  { name: 'MUHAYIMANA Edison',          phone: '788545947', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'MUHIRE RUGUMANYA Etienne',   phone: '788769841', district: 'Gasabo',     sector: 'Rusororo' },
+  { name: 'MUHIZI Alexis',              phone: '788533288', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'MUJAWAMALIYA Immaculee',     phone: '788793121', district: 'Nyanza',     sector: 'Busasamana' },
+  { name: 'MUJAWAYEZU Anastasie',       phone: '788531394', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'MUKAKAMANZI Alphonsine',     phone: '788547904', district: 'Kicukiro',   sector: 'Nyarugunga' },
+  { name: 'MUKAMANA Safina',            phone: '788309448', district: 'Nyarugenge', sector: 'Nyamirambo' },
+  { name: 'MUKAMPOGAZI Consolee',       phone: '788842932', district: 'Kicukiro',   sector: 'Gahanga' },
+  { name: 'MUKAMUKIGA Esperance',       phone: '788432740', district: 'Gasabo',     sector: 'Gisozi' },
+  { name: 'MUKANJISHI Joan',            phone: '788432847', district: 'Kicukiro',   sector: 'Kicukiro' },
+  { name: 'MUKANSANGA Marguerite',      phone: '788305806', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'MUKASE Marie Chantal',       phone: '788495314', district: 'Gasabo',     sector: 'Kinyinya' },
+  { name: 'MUKAYIRANGA Euphrasie',      phone: '788563268', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'MULINZI Jean de Dieu',       phone: '788754609', district: 'Kicukiro',   sector: 'Gatenga' },
+  { name: 'MUNINI Patrick',             phone: '788675233', district: 'Bugesera',   sector: 'Nyamata' },
+  { name: 'MUNYANEZA Gonzague',         phone: '788646055', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'MUNYANEZA Roger Claude',     phone: '788857117', district: 'Kicukiro',   sector: 'Kicukiro' },
+  { name: 'MUNYANGAJU Damascene',       phone: '788306700', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'MUNYANKINDI Monique',        phone: '788382535', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'MURAGIJIMANA Emmanuel',      phone: '788306145', district: 'Gasabo',     sector: 'Kacyiru' },
+  { name: 'MURENZI Nicolas',            phone: '788428621', district: 'Musanze',    sector: 'Muhoza' },
+  { name: 'MUSABYIMANA Aphrodis',       phone: '788409753', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'MUSHIMIRE Evode',            phone: '788548985', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'MUTABAZI Simeon',            phone: '788265203', district: 'Gasabo',     sector: 'Gisozi' },
+  { name: 'MUTEBUTSI Alexis',           phone: '788809657', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'MWIZERWA Annet',             phone: '788494872', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'MWIZERWA Marie Grace',       phone: '783897305', district: 'Gasabo',     sector: 'Kacyiru' },
+  { name: 'NAHIMANA Jacqueline',        phone: '788589295', district: 'Kicukiro',   sector: 'Kagarama' },
+  { name: 'NAYIGIZIKI Joel',            phone: '788545869', district: 'Musanze',    sector: 'Muhoza' },
+  { name: 'NDAGIJIMANA Augustin',       phone: '788830007', district: 'Kicukiro',   sector: 'Masaka' },
+  { name: 'NDAGIJIMANA Viateur',        phone: '788306978', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'NDAMAGE Ferdinand',          phone: '788414707', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'NDAYIRAGIJE Tharcisse',      phone: '788829444', district: 'Rwamagana',  sector: 'Kigabiro' },
+  { name: 'NDAYISABA Fidele',           phone: '788453160', district: 'Nyarugenge', sector: 'Kimisagara' },
+  { name: 'NDAYISENGA Maurice',         phone: '788841527', district: 'Huye',       sector: 'Ngoma' },
+  { name: 'NDENGEYINGOMA Louise',       phone: '788511559', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'NDENGEYINGOMA Marie Yvonne', phone: '788521009', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'NDUWAYO Jean de Dieu',       phone: '788308980', district: 'Ruhango',    sector: 'Ruhango' },
+  { name: 'NGENDAHAYO Theogene',        phone: '783593165', district: 'Nyamasheke', sector: 'Kagano' },
+  { name: 'NIWEMUHOZA Evode',           phone: '787048646', district: 'Muhanga',    sector: 'Nyamabuye' },
+  { name: 'NKINZINGABO Nkunda Alexis',  phone: '783110638', district: 'Kirehe',     sector: 'Kigina' },
+  { name: 'NKURIKIYINKA Theobard',      phone: '788771594', district: 'Gasabo',     sector: 'Gisozi' },
+  { name: 'NSANGANIYE Emmanuel',        phone: '788608123', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'NSENGIMANA Jean Pierre',     phone: '788845670', district: 'Rwamagana',  sector: 'Muhazi' },
+  { name: 'NSENGIMANA SIBOMANA Epaphrodite', phone: '788308201', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'NSHUTI Salim',               phone: '785556612', district: 'Nyarugenge', sector: 'Nyamirambo' },
+  { name: 'NTAGANIRA Fidele',           phone: '788734307', district: 'Muhanga',    sector: 'Nyamabuye' },
+  { name: 'NTIVUGURUZWA Emmanuel',      phone: '788355363', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'NYIRABAGENI Brigitte',       phone: '788724901', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'NYIRAGICIRO Marie Antoinette',phone:'783616780', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'NYIRAHABIMANA Jacqueline',   phone: '783118532', district: 'Rubavu',     sector: 'Kanama' },
+  { name: 'NYIRAMATAMA Bernadette',     phone: '788303815', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'NYIRANGIRIMANA Asterie',     phone: '788758537', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'NYIRANSABIMANA Cecile',      phone: '784000808', district: 'Nyarugenge', sector: 'Kimisagara' },
+  { name: 'NYIRINGABO Theoneste',       phone: '788653654', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'NZAGAHIMANA Alexis',         phone: '788689248', district: 'Nyarugenge', sector: 'Kimisagara' },
+  { name: 'NZARAMBA AGABA Jean Claude', phone: '788798434', district: 'Nyarugenge', sector: 'Kimisagara' },
+  { name: 'NZEYIMANA Lusinga Innocent', phone: '788526075', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'NZIZA Venuste',              phone: '788572925', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'RUDAHARA Eric',              phone: '788568826', district: 'Gasabo',     sector: 'Rusororo' },
+  { name: 'RUGAMBAGE Emmanuel',         phone: '788304697', district: 'Kicukiro',   sector: 'Niboye' },
+  { name: 'RUGEMINTWAZA Emmanuel',      phone: '788464352', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'RUGENERWA Bimira',           phone: '782109424', district: 'Gicumbi',    sector: 'Byumba' },
+  { name: 'RURAMIRWA Philippe',         phone: '788876718', district: 'Gasabo',     sector: 'Rusororo' },
+  { name: 'RUSANGANWA Jean Claude',     phone: '788898760', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'RUTIKANGA Sixbert',          phone: '788672428', district: 'Nyarugenge', sector: 'Muhima' },
+  { name: 'RUZINDANA Fidele',           phone: '788595423', district: 'Musanze',    sector: 'Muhoza' },
+  { name: 'RWABUKUMBA Moussa',          phone: '788673699', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'RWISUMBURA UMUTONI Therese', phone: '788798833', district: 'Bugesera',   sector: 'Nyamata' },
+  { name: 'SAFARI Jean Claude',         phone: '733497365', district: 'Kicukiro',   sector: 'Kanombe' },
+  { name: 'SEBURIKOKO Jeremie',         phone: '783051341', district: 'Nyarugenge', sector: 'Rwezamenyo' },
+  { name: 'SERUKIZA GIHINDA James',     phone: '788677097', district: 'Gasabo',     sector: 'Gisozi' },
+  { name: 'SHEMA GAKWAVU Gentil Augustin', phone: '788400702', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'SHYIRIBURYO Cyrille',        phone: '788410822', district: 'Huye',       sector: 'Ngoma' },
+  { name: 'SIBOMANA Aimable',           phone: '788998668', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'SIBOMANA Jean Baptiste',     phone: '788809198', district: 'Gasabo',     sector: 'Rusororo' },
+  { name: 'SIMBIZI Fulgence',           phone: '788415842', district: 'Nyarugenge', sector: 'Nyamirambo' },
+  { name: 'TUGIRIMANA Vincent',         phone: '788426570', district: 'Rubavu',     sector: 'Gisenyi' },
+  { name: 'TWAGIRAMUNGU KIZITO Theogene', phone: '782372458', district: 'Rusizi',   sector: 'Kamembe' },
+  { name: 'TWAJAMAHORO Herman',         phone: '788534833', district: 'Gicumbi',    sector: 'Byumba' },
+  { name: 'TWIZEYIMANA Theophile',      phone: '783144305', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'UMUTONI Adeline',            phone: '788461243', district: 'Nyarugenge', sector: 'Nyarugenge' },
+  { name: 'UMUTONI Gloriose',           phone: '788307452', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'UTAZIRUBANDA GAD',           phone: '788308145', district: 'Gasabo',     sector: 'Remera' },
+  { name: 'UWAMAHORO Eugenie',          phone: '788408015', district: 'Nyarugenge', sector: 'Kimisagara' },
+  { name: 'UWAMALIYA Jeannette',        phone: '788874872', district: 'Huye',       sector: 'Ngoma' },
+  { name: 'UWANTEGE Diana',             phone: '788314930', district: 'Gasabo',     sector: 'Kimironko' },
+  { name: 'UWAYO Beatrice',             phone: '788294115', district: 'Rubavu',     sector: 'Gisenyi' },
+  { name: 'UWIMANA Channy',             phone: '788408056', district: 'Kicukiro',   sector: 'Kanombe' },
+  { name: 'UWIMPAYE Jean De Dieu',      phone: '788848480', district: 'Huye',       sector: 'Ngoma' },
+  { name: 'UWITONZE Nasira',            phone: '788565161', district: 'Nyarugenge', sector: 'Rwezamenyo' },
+  { name: 'VUGUZIGA Valerie',           phone: '788492858', district: 'Ngoma',      sector: 'Kibungo' },
+  { name: 'YANKURIJE Valentine',        phone: '788220384', district: 'Rubavu',     sector: 'Gisenyi' },
 ]
+
+const NOTARIES = RAW.map(n => ({
+  name: n.name,
+  firm: `${n.name} — Private Land Notary`,
+  province: districtProvince[n.district] || 'Rwanda',
+  district: n.district,
+  address: `${n.sector} Sector, ${n.district}`,
+  phone: `+250${n.phone}`,
+  specializations: ['Property', 'Land', 'Civil', 'Succession'],
+  languages: ['Kinyarwanda', 'French'],
+  workingHours: 'Mon–Fri 8:00–17:00',
+  verified: true,
+  active: true,
+}))
 
 async function seed() {
   await mongoose.connect(process.env.MONGODB_URI)
   console.log('Connected to MongoDB')
 
-  const existing = await Notary.countDocuments()
-  if (existing > 0) {
-    console.log(`Found ${existing} existing notaries. Clearing and re-seeding...`)
-    await Notary.deleteMany({})
-  }
+  await Notary.deleteMany({})
+  console.log('Cleared existing notaries')
 
   const inserted = await Notary.insertMany(NOTARIES)
-  console.log(`✓ Seeded ${inserted.length} notary offices across Rwanda`)
+  console.log(`✓ Seeded ${inserted.length} notaries (NLA official list)`)
 
-  // Show breakdown by province
   const breakdown = await Notary.aggregate([
     { $group: { _id: '$province', count: { $sum: 1 } } },
     { $sort: { count: -1 } }
