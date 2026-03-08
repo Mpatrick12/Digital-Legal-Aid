@@ -4,6 +4,15 @@ import { Search, MapPin, Phone, Mail, Globe, Clock, Star, ChevronDown, Building2
 import { getApiUrl } from '../config'
 import './NotaryPage.css'
 
+// Rwanda's official district groupings — used to filter district dropdown by province
+const PROVINCE_DISTRICTS = {
+  'Kigali City':       ['Gasabo', 'Kicukiro', 'Nyarugenge'],
+  'Eastern Province':  ['Bugesera', 'Gatsibo', 'Kayonza', 'Kirehe', 'Ngoma', 'Nyagatare', 'Rwamagana'],
+  'Northern Province': ['Burera', 'Gakenke', 'Gicumbi', 'Musanze', 'Rulindo'],
+  'Southern Province': ['Gisagara', 'Huye', 'Kamonyi', 'Muhanga', 'Nyamagabe', 'Nyamasheke', 'Nyanza', 'Ruhango'],
+  'Western Province':  ['Karongi', 'Ngororero', 'Nyabihu', 'Nyamasheke', 'Rubavu', 'Rusizi', 'Rutsiro'],
+}
+
 const SPECIALIZATION_COLORS = {
   Property:    { bg: '#dbeafe', text: '#1d4ed8' },
   Succession:  { bg: '#fce7f3', text: '#be185d' },
@@ -138,8 +147,7 @@ export default function NotaryPage() {
             <div className="select-wrap">
               <select value={district} onChange={e => setDistrict(e.target.value)}>
                 <option value="">All Districts</option>
-                {filterOptions.districts
-                  .filter(d => !province || notaries.find(n => n.district === d && n.province === province) || !province)
+                {(province ? (PROVINCE_DISTRICTS[province] || []) : filterOptions.districts)
                   .map(d => <option key={d}>{d}</option>)}
               </select>
               <ChevronDown size={14} className="select-arrow" />
