@@ -214,9 +214,18 @@ export default function GazetteDetail() {
           <span className="topbar-cat">{doc.category}</span>
           {doc.gazetteNumber && <span className="topbar-gaz">Gazette {doc.gazetteNumber}</span>}
         </div>
-        <a className="download-btn" href={`${API_BASE_URL}/api/gazette/${id}/download`} target="_blank" rel="noreferrer">
-          ↓ Download PDF
-        </a>
+        {doc.pdfUrl && doc.pdfUrl.startsWith('http') ? (
+          <a className="download-btn" href={doc.pdfUrl} target="_blank" rel="noreferrer">
+            ↓ Download PDF
+          </a>
+        ) : (
+          <a className="download-btn download-btn--external"
+             href="https://www.minijust.gov.rw/laws-and-regulations"
+             target="_blank" rel="noreferrer"
+             title="Official copies available on MINIJUST">
+            ↗ View on MINIJUST
+          </a>
+        )}
       </div>
 
       {/* ── Main layout ── */}

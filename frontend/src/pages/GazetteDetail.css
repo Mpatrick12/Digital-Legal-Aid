@@ -35,6 +35,9 @@
   transition: opacity .2s;
 }
 .download-btn:hover { opacity: .88; }
+.download-btn--external {
+  background: #0f766e;  /* teal — visually distinct from the blue download */
+}
 
 /* Layout */
 .detail-layout {
