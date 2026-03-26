@@ -25,7 +25,7 @@ function App() {
 
   // Keep Render backend alive — ping every 14 min so it never sleeps
   useEffect(() => {
-    const ping = () => fetch(getApiUrl('api/health'), { method: 'GET' }).catch(() => {})
+    const ping = () => fetch(getApiUrl('api/health'), { method: 'GET' }).catch(() => { })
     ping()
     const id = setInterval(ping, 14 * 60 * 1000)
     return () => clearInterval(id)
@@ -34,69 +34,69 @@ function App() {
   return (
     <>
       <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/signup" element={<SignUp />} />
-      <Route path="/signin" element={<SignIn />} />
-      <Route path="/admin" element={<AdminLogin />} />
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/search" 
-        element={
-          <ProtectedRoute>
-            <SearchPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/gazette" 
-        element={
-          <ProtectedRoute>
-            <GazetteBrowse />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/gazette/:id" 
-        element={
-          <ProtectedRoute>
-            <GazetteDetail />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/dashboard" 
-        element={
-          <AdminRoute>
-            <AdminDashboard />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/admin/upload-gazette" 
-        element={
-          <AdminRoute>
-            <GazetteUpload />
-          </AdminRoute>
-        } 
-      />
-      <Route 
-        path="/notary" 
-        element={
-          <ProtectedRoute>
-            <NotaryPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route path="/privacy" element={<LegalPolicyPage />} />
-      <Route path="/terms" element={<LegalPolicyPage />} />
-    </Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <SearchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/gazette"
+          element={
+            <ProtectedRoute>
+              <GazetteBrowse />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/gazette/:id"
+          element={
+            <ProtectedRoute>
+              <GazetteDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/upload-gazette"
+          element={
+            <AdminRoute>
+              <GazetteUpload />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/notary"
+          element={
+            <ProtectedRoute>
+              <NotaryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/privacy" element={<LegalPolicyPage />} />
+        <Route path="/terms" element={<LegalPolicyPage />} />
+      </Routes>
       <SiteFooter />
       <ChatWidget language={language} />
     </>
