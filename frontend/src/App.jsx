@@ -12,8 +12,10 @@ import GazetteDetail from './pages/GazetteDetail'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminLogin from './pages/AdminLogin'
 import NotaryPage from './pages/NotaryPage'
+import LegalPolicyPage from './pages/LegalPolicyPage'
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
 import ChatWidget from './components/ChatWidget'
+import SiteFooter from './components/SiteFooter'
 import { useLanguage } from './context/LanguageContext.jsx'
 
 function App() {
@@ -92,7 +94,10 @@ function App() {
           </ProtectedRoute>
         } 
       />
+      <Route path="/privacy" element={<LegalPolicyPage />} />
+      <Route path="/terms" element={<LegalPolicyPage />} />
     </Routes>
+      <SiteFooter />
       <ChatWidget language={language} />
     </>
   )
